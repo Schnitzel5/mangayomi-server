@@ -39,5 +39,6 @@ A self-hosted server for Mangayomi.
 Go to Settings -> Sync:
 
 1. Enable sync
-2. Enter the IP + Port / Domain of your Sync Server, email address and a password with at least 8 characters.
-3. Press 'Sync progress'!
+2. Register an account on your Sync Servers website
+3. Enter the IP + Port / Domain of your Sync Server, email address and a password with at least 8 characters.
+4. Press 'Sync progress'!

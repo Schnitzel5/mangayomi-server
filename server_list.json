@@ -1,12 +1,12 @@
 [
     {
         "name": "Local",
-        "description": "Quick select your localhost server. (for debugging purposes only!)",
+        "description": "Quick select the default localhost server. (for debugging purposes only!)",
         "host": "http://localhost:8080"
     },
     {
         "name": "Dev Server",
-        "description": "This server is located in Frankfurt.",
-        "host": "https://furnace.30062022.xyz"
+        "description": "Official server for testing purposes - located in Frankfurt.",
+        "host": "https://mangayomi.30062022.xyz"
     }
 ]

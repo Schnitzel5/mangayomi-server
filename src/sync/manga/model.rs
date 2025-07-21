@@ -55,8 +55,6 @@ pub struct Manga {
     pub last_read: Option<i64>,
     #[serde(rename = "isLocalArchive")]
     pub is_local_archive: Option<bool>,
-    #[serde(rename = "customCoverImage")]
-    pub custom_cover_image: Option<String>,
     #[serde(rename = "customCoverFromTracker")]
     pub custom_cover_from_tracker: Option<String>,
     #[serde(rename = "itemType")]
@@ -84,7 +82,7 @@ pub struct Chapter {
     pub oid: Option<ObjectId>,
     pub id: i32,
     pub name: String,
-    pub url: String,
+    pub url: Option<String>,
     #[serde(rename = "dateUpload")]
     pub date_upload: Option<String>,
     pub scanlator: Option<String>,

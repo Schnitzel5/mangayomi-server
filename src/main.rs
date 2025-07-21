@@ -130,6 +130,7 @@ fn sync_controller() -> Scope {
         .service(sync::manga::controller::sync_manga)
         .service(sync::history::controller::sync_histories)
         .service(sync::update::controller::sync_updates)
+        .service(sync::settings::controller::sync_settings_obj)
 }
 
 fn rate_limiter() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware> {
@@ -177,6 +178,7 @@ async fn init_db_indexes(conn: &Client) {
     let col_histories: mongodb::Collection<History> =
         conn.database("mangayomi").collection("histories");
     let col_updates: mongodb::Collection<Update> = conn.database("mangayomi").collection("updates");
+    let col_settings: mongodb::Collection<Update> = conn.database("mangayomi").collection("settings");
     let opts = IndexOptions::builder().unique(true).build();
     let idx = IndexModel::builder()
         .keys(doc! { "id": -1, "user": -1 })
@@ -205,5 +207,9 @@ async fn init_db_indexes(conn: &Client) {
     match col_updates.create_index(idx.clone()).await {
         Ok(result) => log::info!("Created updates index: {}", result.index_name),
         Err(_) => log::info!("Failed to create updates index."),
+    };
+    match col_settings.create_index(idx.clone()).await {
+        Ok(result) => log::info!("Created settings index: {}", result.index_name),
+        Err(_) => log::info!("Failed to create settings index."),
     };
 }
