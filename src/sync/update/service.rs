@@ -13,14 +13,26 @@ pub async fn sync_update_list(
     db: web::Data<Client>,
 ) -> UpdateList {
     let col_updates = db.database("mangayomi").collection("updates");
+    let reset_all = update_list
+        .reset_all
+        .clone()
+        .get_or_insert(false)
+        .to_owned();
+
+    if reset_all {
+        delete_many(&col_updates, user_id, &vec![], true).await;
+    }
 
     upsert(&db, col_updates.namespace(), user_id, &update_list.updates).await;
 
-    delete_many(&col_updates, user_id, &update_list.deleted_updates).await;
+    if !reset_all {
+        delete_many(&col_updates, user_id, &update_list.deleted_updates, false).await;
+    }
 
     UpdateList {
         updates: find_all(&col_updates, user_id).await,
         deleted_updates: vec![],
+        reset_all: update_list.reset_all,
     }
 }
 
@@ -28,16 +40,23 @@ async fn delete_many<T: Send + Sync>(
     collection: &Collection<T>,
     user_id: ObjectId,
     ids: &Vec<i32>,
+    reset_all: bool,
 ) {
     if ids.is_empty() {
         return;
     }
     let del_tracks_result = collection
-        .delete_many(doc! {
-            "id": doc! {
-                "$in": ids
-            },
-            "user": user_id,
+        .delete_many(if (reset_all) {
+            doc! {
+                "user": user_id,
+            }
+        } else {
+            doc! {
+                "id": doc! {
+                    "$in": ids
+                },
+                "user": user_id,
+            }
         })
         .await;
     match del_tracks_result {
@@ -74,7 +93,7 @@ async fn upsert(
     if !ops.is_empty() {
         match db.bulk_write(ops).ordered(false).await {
             Ok(result) => log::info!("Upserted {} updates.", result.modified_count),
-            Err(_) => {},
+            Err(_) => {}
         }
     }
 }

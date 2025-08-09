@@ -13,6 +13,11 @@ pub async fn sync_history_list(
     db: web::Data<Client>,
 ) -> HistoryList {
     let col_histories = db.database("mangayomi").collection("histories");
+    let reset_all = history_list.reset_all.clone().get_or_insert(false).to_owned();
+    
+    if reset_all {
+        delete_many(&col_histories, user_id, &vec![], true).await;
+    }
 
     upsert(
         &db,
@@ -22,11 +27,14 @@ pub async fn sync_history_list(
     )
     .await;
 
-    delete_many(&col_histories, user_id, &history_list.deleted_histories).await;
+    if !reset_all {
+        delete_many(&col_histories, user_id, &history_list.deleted_histories, false).await;
+    }
 
     HistoryList {
         histories: find_all(&col_histories, user_id).await,
         deleted_histories: vec![],
+        reset_all: history_list.reset_all,
     }
 }
 
@@ -34,16 +42,23 @@ async fn delete_many<T: Send + Sync>(
     collection: &Collection<T>,
     user_id: ObjectId,
     ids: &Vec<i32>,
+    reset_all: bool,
 ) {
     if ids.is_empty() {
         return;
     }
     let del_tracks_result = collection
-        .delete_many(doc! {
-            "id": doc! {
-                "$in": ids
-            },
-            "user": user_id,
+        .delete_many(if (reset_all) {
+            doc! {
+                "user": user_id,
+            }
+        } else {
+            doc! {
+                "id": doc! {
+                    "$in": ids
+                },
+                "user": user_id,
+            }
         })
         .await;
     match del_tracks_result {
@@ -80,7 +95,7 @@ async fn upsert(
     if !ops.is_empty() {
         match db.bulk_write(ops).ordered(false).await {
             Ok(result) => log::info!("Upserted {} histories.", result.modified_count),
-            Err(_) => {},
+            Err(_) => {}
         }
     }
 }

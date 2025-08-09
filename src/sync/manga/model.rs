@@ -166,4 +166,5 @@ pub struct MangaList {
     pub deleted_chapters: Vec<i32>,
     pub tracks: Vec<Track>,
     pub deleted_tracks: Vec<i32>,
+    pub reset_all: Option<bool>,
 }

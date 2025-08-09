@@ -21,4 +21,5 @@ pub struct Update {
 pub struct UpdateList {
     pub updates: Vec<Update>,
     pub deleted_updates: Vec<i32>,
+    pub reset_all: Option<bool>,
 }
