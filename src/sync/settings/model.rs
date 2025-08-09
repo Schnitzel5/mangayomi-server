@@ -366,7 +366,7 @@ pub struct Settings {
     pub use_mpv_config: Option<bool>,
 
     #[serde(rename = "debandingType")]
-    pub debanding_type: i32,
+    pub debanding_type: Option<i32>,
 
     #[serde(rename = "enableGpuNext")]
     pub enable_gpu_next: Option<bool>,
@@ -381,7 +381,7 @@ pub struct Settings {
     pub enable_audio_pitch_correction: Option<bool>,
 
     #[serde(rename = "audioChannels")]
-    pub audio_channels: i32,
+    pub audio_channels: Option<i32>,
 
     #[serde(rename = "volumeBoostCap")]
     pub volume_boost_cap: Option<i32>,
