@@ -1,3 +1,8 @@
+## 0.1.2
+
+ - updated settings model for v0.6.4
+ - added reset all flag
+
 ## 0.1.1
 
  - added sync for settings

@@ -42,3 +42,7 @@ Go to Settings -> Sync:
 2. Register an account on your Sync Servers website
 3. Enter the IP + Port / Domain of your Sync Server, email address and a password with at least 8 characters.
 4. Press 'Sync progress'!
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Schnitzel5/mangayomi-server&type=Date)](https://www.star-history.com/#Schnitzel5/mangayomi-server&Date)
