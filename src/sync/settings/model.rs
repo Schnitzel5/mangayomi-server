@@ -361,6 +361,36 @@ pub struct Settings {
 
     #[serde(rename = "rpcShowCoverImage")]
     pub rpc_show_cover_image: Option<bool>,
+
+    #[serde(rename = "useMpvConfig")]
+    pub use_mpv_config: Option<bool>,
+
+    #[serde(rename = "debandingType")]
+    pub debanding_type: i32,
+
+    #[serde(rename = "enableGpuNext")]
+    pub enable_gpu_next: Option<bool>,
+
+    #[serde(rename = "useYUV420P")]
+    pub use_yuv420p: Option<bool>,
+
+    #[serde(rename = "audioPreferredLanguages")]
+    pub audio_preferred_languages: Option<String>,
+
+    #[serde(rename = "enableAudioPitchCorrection")]
+    pub enable_audio_pitch_correction: Option<bool>,
+
+    #[serde(rename = "audioChannels")]
+    pub audio_channels: i32,
+
+    #[serde(rename = "volumeBoostCap")]
+    pub volume_boost_cap: Option<i32>,
+
+    #[serde(rename = "algorithmWeights")]
+    pub algorithm_weights: Option<AlgorithmWeights>,
+
+    #[serde(rename = "downloadedOnlyMode")]
+    pub downloaded_only_mode: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -507,6 +537,14 @@ pub struct PlayerSubtitleSettings {
     pub background_color_g: Option<i32>,
     #[serde(rename = "backgroundColorB")]
     pub background_color_b: Option<i32>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AlgorithmWeights {
+    pub genre: Option<i32>,
+    pub setting: Option<i32>,
+    pub synopsis: Option<i32>,
+    pub theme: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize)]
