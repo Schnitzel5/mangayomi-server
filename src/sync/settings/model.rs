@@ -549,5 +549,5 @@ pub struct AlgorithmWeights {
 
 #[derive(Serialize, Deserialize)]
 pub struct SettingsObj {
-    pub settings: Settings,
+    pub settings: Option<Settings>,
 }

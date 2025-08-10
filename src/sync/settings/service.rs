@@ -13,7 +13,12 @@ pub async fn sync_settings(
 ) -> Option<SettingsObj> {
     let col_settings = db.database("mangayomi").collection("settings");
 
-    upsert(&db, col_settings.namespace(), user_id, &settings.settings).await;
+    match &settings.settings {
+        Some(settings) => {
+            upsert(&db, col_settings.namespace(), user_id, settings).await;
+        }
+        None => {}
+    }
 
     match find_one(&col_settings, user_id).await {
         Some(obj) => Some(SettingsObj { settings: obj }),

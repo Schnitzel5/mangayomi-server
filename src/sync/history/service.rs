@@ -13,10 +13,14 @@ pub async fn sync_history_list(
     db: web::Data<Client>,
 ) -> HistoryList {
     let col_histories = db.database("mangayomi").collection("histories");
-    let reset_all = history_list.reset_all.clone().get_or_insert(false).to_owned();
-    
+    let reset_all = history_list
+        .reset_all
+        .clone()
+        .get_or_insert(false)
+        .to_owned();
+
     if reset_all {
-        delete_many(&col_histories, user_id, &vec![], true).await;
+        delete_many(&col_histories, user_id, &vec![0], true).await;
     }
 
     upsert(
@@ -28,7 +32,13 @@ pub async fn sync_history_list(
     .await;
 
     if !reset_all {
-        delete_many(&col_histories, user_id, &history_list.deleted_histories, false).await;
+        delete_many(
+            &col_histories,
+            user_id,
+            &history_list.deleted_histories,
+            false,
+        )
+        .await;
     }
 
     HistoryList {
@@ -48,7 +58,7 @@ async fn delete_many<T: Send + Sync>(
         return;
     }
     let del_tracks_result = collection
-        .delete_many(if (reset_all) {
+        .delete_many(if reset_all {
             doc! {
                 "user": user_id,
             }

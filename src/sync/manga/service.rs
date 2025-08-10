@@ -19,10 +19,10 @@ pub async fn sync_manga_list(
     let reset_all = manga_list.reset_all.clone().get_or_insert(false).to_owned();
 
     if reset_all {
-        delete_many(&col_categories, user_id, &vec![], true).await;
-        delete_many(&col_manga, user_id, &vec![], true).await;
-        delete_many(&col_chapter, user_id, &vec![], true).await;
-        delete_many(&col_track, user_id, &vec![], true).await;
+        delete_many(&col_categories, user_id, &vec![0], true).await;
+        delete_many(&col_manga, user_id, &vec![0], true).await;
+        delete_many(&col_chapter, user_id, &vec![0], true).await;
+        delete_many(&col_track, user_id, &vec![0], true).await;
     }
 
     upsert(
@@ -72,7 +72,7 @@ async fn delete_many<T: Send + Sync>(
         return;
     }
     let del_tracks_result = collection
-        .delete_many(if (reset_all) {
+        .delete_many(if reset_all {
             doc! {
                 "user": user_id,
             }

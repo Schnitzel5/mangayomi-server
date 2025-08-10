@@ -23,5 +23,6 @@ pub struct History {
 pub struct HistoryList {
     pub histories: Vec<History>,
     pub deleted_histories: Vec<i32>,
+    #[serde(rename = "resetAll")]
     pub reset_all: Option<bool>,
 }

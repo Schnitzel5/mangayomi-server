@@ -21,5 +21,6 @@ pub struct Update {
 pub struct UpdateList {
     pub updates: Vec<Update>,
     pub deleted_updates: Vec<i32>,
+    #[serde(rename = "resetAll")]
     pub reset_all: Option<bool>,
 }
