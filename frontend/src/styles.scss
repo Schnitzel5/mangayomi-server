@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
+
+.form-error {
+  visibility: visible;
+  display: block;
+  color: oklch(77.318% 0.128 31.871);
+}
