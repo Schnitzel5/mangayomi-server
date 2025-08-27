@@ -1,8 +1,6 @@
-use actix_web::{web, Scope};
-use crate::app::{controller, preferences};
+use actix_web::web::Redirect;
+use actix_web::{Scope, web};
 
 pub fn basic_controller() -> Scope {
-    web::scope("/app")
-        .service(controller::frontend)
-        .service(preferences::controller::frontend)
+    web::scope("/web").default_service(web::to(|| async { Redirect::to("/") }))
 }

@@ -1,8 +1,7 @@
-use std::io;
 use actix_files::NamedFile;
-use actix_web::{get};
+use actix_web::{Responder, get};
 
-#[get("/")]
-async fn frontend() -> io::Result<NamedFile> {
-    Ok(NamedFile::open("./frontend/dist/index.html")?)
+#[get("/home")]
+async fn home() -> impl Responder {
+    NamedFile::open_async("./frontend/dist/browser/index.html").await
 }

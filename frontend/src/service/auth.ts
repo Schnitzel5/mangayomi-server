@@ -1,5 +1,6 @@
 import {Injectable, signal} from '@angular/core';
 import {HttpClient, HttpResponse} from "@angular/common/http";
+import {CookieService} from "./cookie-service";
 
 @Injectable({
     providedIn: 'root'
@@ -7,16 +8,17 @@ import {HttpClient, HttpResponse} from "@angular/common/http";
 export class AuthService {
     authState = signal<boolean>(false);
 
-    constructor(private http: HttpClient) {
+    constructor(private http: HttpClient, private cookie: CookieService) {
         this.authState.set(this.isLoggedIn());
     }
 
-    register(email: String, password: String, callback: (res: HttpResponse<Object>) => void) {
-        this.http.post('/api/register', {
+    register(email: String, password: String, callback: (res: HttpResponse<String>) => void) {
+        this.http.post('/register', {
             email: email,
             password: password
         }, {
             observe: 'response',
+            responseType: 'text',
         }).subscribe(res => {
             console.log("Status code: ", res.status);
             console.log("Body: ", res.body);
@@ -24,27 +26,17 @@ export class AuthService {
         });
     }
 
-    login(email: String, password: String, isRemember: boolean, callback: (res: HttpResponse<Object>) => void) {
-        this.http.post('/api/login', {
+    login(email: String, password: String, callback: (res: HttpResponse<String>) => void) {
+        this.http.post('/login', {
             email: email,
             password: password
         }, {
             observe: 'response',
+            responseType: 'text',
             withCredentials: true,
         }).subscribe(res => {
             console.log("Status code: ", res.status);
             console.log("Body: ", res.body);
-            const cookieHeader = res.headers.get("set-cookie");
-            const startIdx = cookieHeader?.indexOf("id=") ?? -1;
-            const endIdx = cookieHeader?.indexOf(";", startIdx) ?? -1;
-            if (startIdx == -1 || endIdx == -1) {
-            }
-            const authToken = cookieHeader!.substring(startIdx + 3, endIdx);
-            if (isRemember) {
-                localStorage.setItem("token", authToken);
-            } else {
-                sessionStorage.setItem("token", authToken);
-            }
             callback(res);
         });
     }
@@ -54,7 +46,7 @@ export class AuthService {
     }
 
     getToken(): string | null {
-        return sessionStorage.getItem("token") || localStorage.getItem("token");
+        return this.cookie.getCookie('id');
     }
 
 }

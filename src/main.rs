@@ -16,6 +16,7 @@ use mongodb::bson::doc;
 use mongodb::options::{ClientOptions, IndexOptions};
 use mongodb::{Client, IndexModel};
 use std::fs;
+use actix_web::web::Redirect;
 use tera::Tera;
 use walkdir::WalkDir;
 
@@ -113,7 +114,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(conn.clone()))
             .app_data(web::Data::new(tera.clone()))
             .service(actix_files::Files::new("/assets", "./resources/assets"))
-            .service(actix_files::Files::new("/static", "./frontend/dist"))
+            .service(actix_files::Files::new("/static", "./frontend/dist/browser"))
             .service(user::controller::register)
             .service(user::controller::login)
             .service(user::controller::logout)

@@ -42,17 +42,13 @@
                     Must be more than 8 characters
                 </p>
                 <label class="label my-3">
-                    <input type="checkbox" [(ngModel)]="isRemember" class="toggle toggle-sm"/>
-                    Stay logged in
-                </label>
-                <label class="label my-3">
                     <input type="checkbox" [(ngModel)]="isAccept" class="toggle toggle-sm"/>
-                    Accept <a class="link link-primary" href="/terms"
+                    Accept <a class="link link-primary" href="/frontend/terms"
                               target="_blank"
                               rel="noopener">terms of use</a>
                 </label>
-                <button class="btn btn-neutral" [disabled]="!isFormValid()">Register</button>
-                <button class="btn btn-neutral" [disabled]="!isFormValid()">Login</button>
+                <button class="btn btn-neutral" [disabled]="!isFormValid()" (click)="register()">Register</button>
+                <button class="btn btn-neutral" [disabled]="!isFormValid()" (click)="login()">Login</button>
             </div>
         </div>
     </div>

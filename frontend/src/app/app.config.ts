@@ -5,6 +5,8 @@ import {routes} from './app.routes';
 import {provideHttpClient} from "@angular/common/http";
 import {provideIcons} from "@ng-icons/core";
 import {featherSettings} from "@ng-icons/feather-icons";
+import {provideAnimations} from "@angular/platform-browser/animations";
+import {provideToastr} from "ngx-toastr";
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -13,5 +15,7 @@ export const appConfig: ApplicationConfig = {
         provideRouter(routes),
         provideHttpClient(),
         provideIcons({featherSettings}),
+        provideAnimations(),
+        provideToastr({progressBar: true}),
     ]
 };

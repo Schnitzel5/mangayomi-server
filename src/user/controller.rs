@@ -1,3 +1,4 @@
+use actix_files::NamedFile;
 use crate::user::model::BasicUser;
 use crate::user::service::{login_account, register_account};
 use actix_http::HttpMessage;
@@ -6,7 +7,6 @@ use actix_web::error::ErrorBadRequest;
 use actix_web::web::Data;
 use actix_web::{HttpRequest, HttpResponse, Responder, Result, get, post, web};
 use mongodb::Client;
-use tera::{Context, Tera};
 use validator::Validate;
 
 /// register a new account with the given email and password
@@ -51,9 +51,7 @@ async fn logout(user: Identity) -> Result<String> {
     Ok("Logged out!".to_owned())
 }
 
-/// logout from session
 #[get("/")]
-async fn home(tera: Data<Tera>) -> impl Responder {
-    let ctx = Context::new();
-    HttpResponse::Ok().body(tera.render("register.html", &ctx).unwrap())
+async fn home() -> impl Responder {
+    NamedFile::open_async("./frontend/dist/browser/index.html").await
 }
