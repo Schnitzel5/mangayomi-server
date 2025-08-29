@@ -1,12 +1,13 @@
-use crate::user::model::BasicUser;
-use crate::user::service::{login_account, register_account};
+use actix_files::NamedFile;
+use crate::user::model::{BasicUser, UpdateUser};
+use crate::user::service::{delete_account, login_account, register_account, update_account};
 use actix_http::HttpMessage;
 use actix_identity::Identity;
 use actix_web::error::ErrorBadRequest;
 use actix_web::web::Data;
-use actix_web::{HttpRequest, HttpResponse, Responder, Result, get, post, web};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result, get, post, web, delete};
+use mongodb::bson::oid::ObjectId;
 use mongodb::Client;
-use tera::{Context, Tera};
 use validator::Validate;
 
 /// register a new account with the given email and password
@@ -51,9 +52,27 @@ async fn logout(user: Identity) -> Result<String> {
     Ok("Logged out!".to_owned())
 }
 
-/// logout from session
+/// update account
+#[post("/profile")]
+async fn profile(client: Data<Client>, user: Identity, data: web::Json<UpdateUser>) -> impl Responder {
+    let success = update_account(client, ObjectId::parse_str(&user.id().unwrap()).unwrap(), &data).await;
+    if success {
+        return HttpResponse::Ok().body("Account updated!".to_string());
+    }
+    HttpResponse::BadRequest().body("".to_string())
+}
+
+/// delete account
+#[delete("/delete")]
+async fn delete(client: Data<Client>, user: Identity) -> impl Responder {
+    let success = delete_account(client, ObjectId::parse_str(&user.id().unwrap()).unwrap()).await;
+    if success {
+        return HttpResponse::Ok().body("Account successfully deleted!".to_string());
+    }
+    HttpResponse::BadRequest().body("".to_string())
+}
+
 #[get("/")]
-async fn home(tera: Data<Tera>) -> impl Responder {
-    let ctx = Context::new();
-    HttpResponse::Ok().body(tera.render("register.html", &ctx).unwrap())
+async fn home() -> impl Responder {
+    NamedFile::open_async("./frontend/dist/browser/index.html").await
 }

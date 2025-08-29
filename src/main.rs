@@ -23,6 +23,7 @@ mod db;
 mod globals;
 mod sync;
 mod user;
+mod app;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -112,11 +113,15 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(conn.clone()))
             .app_data(web::Data::new(tera.clone()))
             .service(actix_files::Files::new("/assets", "./resources/assets"))
+            .service(actix_files::Files::new("/static", "./frontend/dist/browser"))
+            .service(user::controller::profile)
+            .service(user::controller::delete)
             .service(user::controller::register)
             .service(user::controller::login)
             .service(user::controller::logout)
             .service(user::controller::home)
             .service(sync_controller())
+            .service(app::app_routes::basic_controller())
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
     .bind(format!("{}:{}", host, port))?
