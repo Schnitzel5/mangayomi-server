@@ -9,8 +9,9 @@ COPY . .
 RUN export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc && export CC=aarch64-linux-gnu-gcc
 RUN cargo build --release --target=aarch64-unknown-linux-musl
 
-FROM scratch
+FROM scratch AS runtime
 
 COPY --from=build /app/target/aarch64-unknown-linux-musl/release/mangayomi-server /app/server
 COPY ./resources ./resources
+COPY ./frontend/dist/browser ./frontend/dist/browser
 CMD ["/app/server"]

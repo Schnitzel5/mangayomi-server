@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 RUN cargo build --release --target=x86_64-unknown-linux-musl
 
-FROM scratch
+FROM scratch AS runtime
 
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/mangayomi-server /app/server
 COPY ./resources ./resources
+COPY ./frontend/dist/browser ./frontend/dist/browser
 CMD ["/app/server"]
