@@ -7,6 +7,7 @@ import {provideIcons} from "@ng-icons/core";
 import {featherSettings} from "@ng-icons/feather-icons";
 import {provideAnimations} from "@angular/platform-browser/animations";
 import {provideToastr} from "ngx-toastr";
+import {CookieService} from "ngx-cookie-service";
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -17,5 +18,6 @@ export const appConfig: ApplicationConfig = {
         provideIcons({featherSettings}),
         provideAnimations(),
         provideToastr({progressBar: true}),
+        CookieService
     ]
 };

@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {Router, RouterOutlet} from '@angular/router';
 import {Theme} from "./theme/theme";
 import {Appbar} from "./appbar/appbar";
 import {Footer} from "./footer/footer";
+import {AuthService} from "../service/auth";
 
 @Component({
   selector: 'app-root',
@@ -11,5 +12,9 @@ import {Footer} from "./footer/footer";
   styleUrl: './app.scss'
 })
 export class App {
-  protected readonly title = signal('frontend');
+  constructor(private router: Router, private auth: AuthService) {
+    if (!auth.isLoggedIn()) {
+      router.navigate(['/web/register']);
+    }
+  }
 }

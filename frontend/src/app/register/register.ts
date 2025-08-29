@@ -2,6 +2,7 @@ import {Component, model, OnInit} from '@angular/core';
 import {FormsModule} from "@angular/forms";
 import {AuthService} from "../../service/auth";
 import {ToastrService} from "ngx-toastr";
+import {Router} from "@angular/router";
 
 @Component({
     selector: 'app-register',
@@ -15,9 +16,9 @@ export class Register implements OnInit {
     EMAIL_REGEX = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
     email = model<String>('');
     password = model<String>('');
-    isAccept = model<boolean>(false);
+    isRemember = model<boolean>(false);
 
-    constructor(private auth: AuthService, private toastr: ToastrService) {
+    constructor(private router: Router, private auth: AuthService, private toastr: ToastrService) {
     }
 
     ngOnInit() {
@@ -32,7 +33,7 @@ export class Register implements OnInit {
     }
 
     isFormValid(): boolean {
-        return this.isEmailValid() && this.isPasswordValid() && this.isAccept();
+        return this.isEmailValid() && this.isPasswordValid();
     }
 
     register() {
@@ -49,10 +50,11 @@ export class Register implements OnInit {
     }
 
     login() {
-        this.auth.login(this.email(), this.password(), res => {
+        this.auth.login(this.email(), this.password(), this.isRemember(), res => {
             if (res.status === 400 || (res.body && res.body.includes("Account not found"))) {
                 this.toastr.error("Invalid email or password!");
             } else if (res.status === 200) {
+                this.router.navigate(['/']);
                 this.toastr.success("Logged in successfully!");
             } else {
                 this.toastr.error("Server error!");

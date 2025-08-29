@@ -1,1 +1,83 @@
-<p>profile works!</p>
+<div class="hero mt-5">
+    <div class="hero-content">
+        <div class="card w-80 bg-base-200">
+            <div class="card-body gap-3">
+                <label class="input">
+                    <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <g
+                                stroke-linejoin="round"
+                                stroke-linecap="round"
+                                stroke-width="2.5"
+                                fill="none"
+                                stroke="currentColor"
+                        >
+                            <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </g>
+                    </svg>
+                    <input type="email" placeholder="Email" [(ngModel)]="email" required/>
+                </label>
+                <div class="validator-hint mb-3 form-error" [style.display]="(isEmailValid()) ? 'none' : 'block'">Enter
+                    valid email address
+                </div>
+                <label class="input">
+                    <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <g
+                                stroke-linejoin="round"
+                                stroke-linecap="round"
+                                stroke-width="2.5"
+                                fill="none"
+                                stroke="currentColor"
+                        >
+                            <path
+                                    d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"
+                            ></path>
+                            <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                        </g>
+                    </svg>
+                    <input type="password" placeholder="Password"
+                           title="Must be more than 8 characters" [(ngModel)]="password" required/>
+                </label>
+                <p class="validator-hint mb-3 form-error" [style.display]="(isPasswordValid()) ? 'none' : 'block'">
+                    Must be more than 8 characters
+                </p>
+                <label class="input">
+                    <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <g
+                                stroke-linejoin="round"
+                                stroke-linecap="round"
+                                stroke-width="2.5"
+                                fill="none"
+                                stroke="currentColor"
+                        >
+                            <path
+                                    d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"
+                            ></path>
+                            <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                        </g>
+                    </svg>
+                    <input type="password" placeholder="Old Password"
+                           title="Must be more than 8 characters" [(ngModel)]="passwordOld" required/>
+                </label>
+                <p class="validator-hint mb-3 form-error" [style.display]="(isPasswordOldValid()) ? 'none' : 'block'">
+                    Must be more than 8 characters
+                </p>
+                <button class="btn btn-neutral" [disabled]="!isFormValid()" (click)="updateProfile()">Update Profile
+                </button>
+                <button class="btn btn-outline btn-error" onclick="showDeleteDialog.showModal()">Delete Account</button>
+                <dialog id="showDeleteDialog" class="modal modal-bottom sm:modal-middle">
+                    <div class="modal-box">
+                        <h3 class="text-lg font-bold">Delete Account</h3>
+                        <p class="py-4">Confirm to delete your account!</p>
+                        <div class="modal-action">
+                            <button class="btn btn-outline btn-error" (click)="deleteAccount()">Confirm to delete</button>
+                        </div>
+                    </div>
+                    <form method="dialog" class="modal-backdrop">
+                        <button>close</button>
+                    </form>
+                </dialog>
+            </div>
+        </div>
+    </div>
+</div>

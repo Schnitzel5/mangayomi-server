@@ -35,15 +35,15 @@
             <ul
                     tabindex="0"
                     class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-                <li><a routerLink="/web/register">Login / Register</a></li>
-                <li>
+                <li [hidden]="isLogged()"><a routerLink="/web/register">Login / Register</a></li>
+                <li [hidden]="!isLogged()">
                     <a class="justify-between" routerLink="/web/profile">
                         Profile
                         <span class="badge">New</span>
                     </a>
                 </li>
-                <li><a routerLink="/web/settings">Settings</a></li>
-                <li><a>Logout</a></li>
+                <li [hidden]="!isLogged()"><a routerLink="/web/settings">Settings</a></li>
+                <li [hidden]="!isLogged()" (click)="logout()"><a>Logout</a></li>
             </ul>
         </div>
     </div>

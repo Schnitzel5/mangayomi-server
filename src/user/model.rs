@@ -30,3 +30,12 @@ pub struct BasicUser {
     #[validate(length(min = 8, message = "Password must be at least 8 characters long!"))]
     pub(crate) password: String,
 }
+
+#[derive(Deserialize, Validate)]
+pub struct UpdateUser {
+    #[validate(email)]
+    pub email: String,
+    pub(crate) password: String,
+    #[serde(rename = "passwordOld")]
+    pub(crate) password_old: String,
+}
