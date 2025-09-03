@@ -236,6 +236,9 @@ pub struct Settings {
     #[serde(rename = "aniSkipTimeoutLength")]
     pub ani_skip_timeout_length: Option<i32>,
 
+    #[serde(rename = "customDns")]
+    pub custom_dns: Option<String>,
+
     #[serde(rename = "btServerAddress")]
     pub bt_server_address: Option<String>,
 
@@ -281,6 +284,9 @@ pub struct Settings {
     #[serde(rename = "novelExtensionsRepo")]
     pub novel_extensions_repo: Option<Vec<Repo>>,
 
+    #[serde(rename = "androidProxyServer")]
+    pub android_proxy_server: Option<String>,
+
     #[serde(rename = "disableSectionType")]
     pub disable_section_type: i32,
 
@@ -289,6 +295,9 @@ pub struct Settings {
 
     #[serde(rename = "hwdecMode")]
     pub hwdec_mode: Option<String>,
+
+    #[serde(rename = "enableHardwareAcceleration")]
+    pub enable_hardware_acceleration: Option<bool>,
 
     #[serde(rename = "libraryFilterNovelDownloadType")]
     pub library_filter_novel_download_type: Option<i32>,
