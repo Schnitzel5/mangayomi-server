@@ -400,6 +400,9 @@ pub struct Settings {
 
     #[serde(rename = "downloadedOnlyMode")]
     pub downloaded_only_mode: Option<bool>,
+
+    #[serde(rename = "localFolders")]
+    pub local_folders: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
