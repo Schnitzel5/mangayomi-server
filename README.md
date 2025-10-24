@@ -2,6 +2,10 @@
 
 A self-hosted server for Mangayomi.
 
+## Hosted Servers
+
+- [Dev Server](https://mangayomi.30062022.xyz)
+
 ## Requirements
 
 - [Rust](https://www.rust-lang.org/tools/install) and [MongoDB](https://www.mongodb.com/try/download/community)
