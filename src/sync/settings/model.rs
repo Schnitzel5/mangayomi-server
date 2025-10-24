@@ -492,6 +492,7 @@ pub struct Repo {
     pub website: Option<String>,
     #[serde(rename = "jsonUrl")]
     pub json_url: Option<String>,
+    pub hidden: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -46,6 +46,8 @@ pub struct Manga {
     pub status: i32,
     pub favorite: bool,
     pub source: String,
+    #[serde(rename = "sourceId")]
+    pub source_id: Option<i32>,
     pub lang: String,
     #[serde(rename = "dateAdded")]
     pub date_added: Option<i64>,
