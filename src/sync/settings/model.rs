@@ -341,6 +341,27 @@ pub struct Settings {
     #[serde(rename = "novelTextAlign")]
     pub novel_text_align: i32,
 
+    #[serde(rename = "novelReaderTheme")]
+    pub novel_reader_theme: Option<String>,
+
+    #[serde(rename = "novelReaderTextColor")]
+    pub novel_reader_text_color: Option<String>,
+
+    #[serde(rename = "novelReaderPadding")]
+    pub novel_reader_padding: Option<i32>,
+
+    #[serde(rename = "novelReaderLineHeight")]
+    pub novel_reader_line_height: Option<f64>,
+
+    #[serde(rename = "novelShowScrollPercentage")]
+    pub novel_show_scroll_percentage: Option<bool>,
+
+    #[serde(rename = "novelRemoveExtraParagraphSpacing")]
+    pub novel_remove_extra_paragraph_spacing: Option<bool>,
+
+    #[serde(rename = "novelTapToScroll")]
+    pub novel_tap_to_scroll: Option<bool>,
+
     #[serde(rename = "navigationOrder")]
     pub navigation_order: Option<Vec<String>>,
 
