@@ -1,13 +1,12 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpResponse} from "@angular/common/http";
-import {CookieService} from "ngx-cookie-service";
 import {Router} from "@angular/router";
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-    constructor(private router: Router, private http: HttpClient, private cookie: CookieService) {
+    constructor(private router: Router, private http: HttpClient) {
     }
 
     register(email: String, password: String, callback: (res: HttpResponse<String>) => void) {
@@ -58,14 +57,14 @@ export class AuthService {
             observe: 'response',
             responseType: 'text',
             withCredentials: true,
-        }).subscribe(res => {
-            console.log("Status code: ", res.status);
-            console.log("Body: ", res.body);
-            this.router.navigate(['/web/register']);
-            sessionStorage.removeItem("isLoggedIn");
-            localStorage.removeItem("isLoggedIn");
-            sessionStorage.removeItem("currentEmail");
-            localStorage.removeItem("currentEmail");
+        }).subscribe({
+            complete: () => {
+                this.router.navigate(['/web/register']);
+                sessionStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("isLoggedIn");
+                sessionStorage.removeItem("currentEmail");
+                localStorage.removeItem("currentEmail");
+            }
         });
     }
 
