@@ -116,6 +116,9 @@ pub struct Settings {
     #[serde(rename = "saveAsCBZArchive")]
     pub save_as_cbz_archive: Option<bool>,
 
+    #[serde(rename = "deleteDownloadAfterReading")]
+    pub delete_download_after_reading: Option<bool>,
+
     #[serde(rename = "concurrentDownloads")]
     pub concurrent_downloads: Option<i32>,
 
@@ -182,8 +185,17 @@ pub struct Settings {
     #[serde(rename = "checkForExtensionUpdates")]
     pub check_for_extension_updates: Option<bool>,
 
+    #[serde(rename = "backgroundLibraryUpdateIntervalHours")]
+    pub background_library_update_interval_hours: Option<i32>,
+
+    #[serde(rename = "lastBackgroundLibraryUpdateAt")]
+    pub last_background_library_update_at: Option<i64>,
+
     #[serde(rename = "scaleType")]
     pub scale_type: i32,
+
+    #[serde(rename = "enableLogs")]
+    pub enable_logs: Option<bool>,
 
     #[serde(rename = "backgroundColor")]
     pub background_color: i32,
@@ -223,6 +235,9 @@ pub struct Settings {
 
     #[serde(rename = "fullScreenPlayer")]
     pub full_screen_player: Option<bool>,
+
+    #[serde(rename = "forceLandscapePlayer")]
+    pub force_landscape_player: Option<bool>,
 
     #[serde(rename = "updateProgressAfterReading")]
     pub update_progress_after_reading: Option<bool>,
@@ -409,6 +424,69 @@ pub struct Settings {
 
     #[serde(rename = "localFolders")]
     pub local_folders: Option<Vec<String>>,
+
+    #[serde(rename = "libraryFilterMangasCompletedType")]
+    pub library_filter_mangas_completed_type: Option<i32>,
+
+    #[serde(rename = "libraryFilterAnimeCompletedType")]
+    pub library_filter_anime_completed_type: Option<i32>,
+
+    #[serde(rename = "libraryFilterNovelCompletedType")]
+    pub library_filter_novel_completed_type: Option<i32>,
+
+    #[serde(rename = "libraryFilterMangasTrackingType")]
+    pub library_filter_mangas_tracking_type: Option<i32>,
+
+    #[serde(rename = "libraryFilterAnimeTrackingType")]
+    pub library_filter_anime_tracking_type: Option<i32>,
+
+    #[serde(rename = "libraryFilterNovelTrackingType")]
+    pub library_filter_novel_tracking_type: Option<i32>,
+
+    #[serde(rename = "keepScreenOnReader")]
+    pub keep_screen_on_reader: Option<bool>,
+
+    #[serde(rename = "webtoonSidePadding")]
+    pub webtoon_side_padding: Option<i32>,
+
+    #[serde(rename = "showPageGaps")]
+    pub show_page_gaps: Option<bool>,
+
+    #[serde(rename = "invertColors")]
+    pub invert_colors: Option<bool>,
+
+    #[serde(rename = "grayscale")]
+    pub grayscale: Option<bool>,
+
+    #[serde(rename = "readerBrightness")]
+    pub reader_brightness: Option<f64>,
+
+    #[serde(rename = "readerContrast")]
+    pub reader_contrast: Option<f64>,
+
+    #[serde(rename = "readerSaturation")]
+    pub reader_saturation: Option<f64>,
+
+    #[serde(rename = "readerNavigationLayout")]
+    pub reader_navigation_layout: Option<i32>,
+
+    #[serde(rename = "backupCompressionLevel")]
+    pub backup_compression_level: Option<i32>,
+
+    #[serde(rename = "showNSFW")]
+    pub show_nsfw: Option<bool>,
+
+    #[serde(rename = "ttsSpeechRate")]
+    pub tts_speech_rate: Option<f64>,
+
+    #[serde(rename = "ttsPitch")]
+    pub tts_pitch: Option<f64>,
+
+    #[serde(rename = "ttsLanguage")]
+    pub tts_language: Option<String>,
+
+    #[serde(rename = "ttsVoice")]
+    pub tts_voice: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
