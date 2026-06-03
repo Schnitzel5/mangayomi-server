@@ -1,0 +1,29 @@
+name = "mangayomi-cloudflare"
+main = "src/index.ts"
+compatibility_date = "2026-06-02"
+compatibility_flags = ["nodejs_compat"]
+
+# Treat .css imports as raw text so we can bundle the prebuilt Tailwind/DaisyUI
+# stylesheet directly into the worker (renderDashboardHtml embeds it inline).
+# The CSS itself is produced by `npm run build:css` (Tailwind + DaisyUI).
+rules = [
+  { type = "Text", globs = ["**/*.css"], fallthrough = true },
+]
+
+# Vars that are safe to commit. Secrets (e.g. JWT_SECRET) must be set with
+# `wrangler secret put JWT_SECRET` rather than checked in here.
+[vars]
+APP_NAME = "Mangayomi Sync"
+TOKEN_TTL_DAYS = "30"
+AUTH_COOKIE_NAME = "id"
+AUTH_ISSUER = "mangayomi-cloudflare"
+MAX_REQUEST_BODY_BYTES = ""   # empty = 10 MB (Free plan); set to "104857600" for Paid plan
+
+# Replace the D1 binding with your own:
+#   wrangler d1 create mangayomi_sync
+# and paste the printed id into database_id below. The `preview_id` is
+# used by `wrangler dev` (local D1); it is optional and can be left blank.
+[[d1_databases]]
+binding = "DB"
+database_name = "mangayomi_sync"
+database_id = ""

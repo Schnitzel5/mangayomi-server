@@ -3,3 +3,10 @@
 .env
 *.db
 .idea
+cookies.txt
+cloudflare/.wrangler/
+cloudflare/node_modules/
+cloudflare/dist/
+cloudflare/.dev.vars
+cloudflare/.dev.vars.*
+cloudflare/wrangler.log

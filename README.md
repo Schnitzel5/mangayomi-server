@@ -10,7 +10,7 @@ A self-hosted server for Mangayomi.
 
 - [Rust](https://www.rust-lang.org/tools/install) and [MongoDB](https://www.mongodb.com/try/download/community)
 - or [Docker Engine / Desktop](https://www.docker.com/)
-
+- or [Cloudflare Workers](https://www.cloudflare.com/)
 ## IDE
 - [VSC](https://code.visualstudio.com/download) or [RustRover](https://www.jetbrains.com/rust/) recommended
 
@@ -38,6 +38,14 @@ A self-hosted server for Mangayomi.
 5. Run the project with `docker compose up -d`
 6. Connect to the sync server using the host and port set in `.env`.  
    By default, the server will be reachable at `http://localhost:8080`
+
+## Setup - Cloudflare Worker
+
+Experiemntal
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button.svg)](https://deploy.workers.cloudflare.com/?url=https://github.com/Schnitzel5/mangayomi-server/tree/main/cloudflare)
+
+For full details, see [`cloudflare/README.md`](cloudflare/README.md).
 
 ## How to use it on the client
 Go to Settings -> Sync:
