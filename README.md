@@ -49,4 +49,10 @@ Go to Settings -> Sync:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Schnitzel5/mangayomi-server&type=Date)](https://www.star-history.com/#Schnitzel5/mangayomi-server&Date)
+<a href="https://www.star-history.com/?type=date&repos=Schnitzel5%2Fmangayomi-server">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Schnitzel5/mangayomi-server&type=date&theme=dark&legend=top-left&sealed_token=2styYBs0WCBLpy-4NKEQMa6PztvvIp5OjKgkC7ihCCER2a3GMwpci3c2-3p2ds-AMGZXW2_UghajccQgycM__xQTFDDfrTurmn7BEszOXNbnKZUC5E3VJqGDeI-ate7Zmx5Ct7Phw_xGuKpZsVmWmO6G4V2tRMB4bTpvx6Tx_7XbyMiDHVaGJXVlPFBY" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Schnitzel5/mangayomi-server&type=date&legend=top-left&sealed_token=2styYBs0WCBLpy-4NKEQMa6PztvvIp5OjKgkC7ihCCER2a3GMwpci3c2-3p2ds-AMGZXW2_UghajccQgycM__xQTFDDfrTurmn7BEszOXNbnKZUC5E3VJqGDeI-ate7Zmx5Ct7Phw_xGuKpZsVmWmO6G4V2tRMB4bTpvx6Tx_7XbyMiDHVaGJXVlPFBY" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Schnitzel5/mangayomi-server&type=date&legend=top-left&sealed_token=2styYBs0WCBLpy-4NKEQMa6PztvvIp5OjKgkC7ihCCER2a3GMwpci3c2-3p2ds-AMGZXW2_UghajccQgycM__xQTFDDfrTurmn7BEszOXNbnKZUC5E3VJqGDeI-ate7Zmx5Ct7Phw_xGuKpZsVmWmO6G4V2tRMB4bTpvx6Tx_7XbyMiDHVaGJXVlPFBY" />
+ </picture>
+</a>
