@@ -1,4 +1,4 @@
-pub mod manga;
 pub mod history;
-pub mod update;
+pub mod manga;
 pub mod settings;
+pub mod update;

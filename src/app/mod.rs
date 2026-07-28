@@ -1,3 +1,3 @@
 pub mod app_routes;
-pub mod preferences;
 mod controller;
+pub mod preferences;

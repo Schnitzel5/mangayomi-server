@@ -19,11 +19,11 @@ use std::fs;
 use tera::Tera;
 use walkdir::WalkDir;
 
+mod app;
 mod db;
 mod globals;
 mod sync;
 mod user;
-mod app;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -113,7 +113,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(conn.clone()))
             .app_data(web::Data::new(tera.clone()))
             .service(actix_files::Files::new("/assets", "./resources/assets"))
-            .service(actix_files::Files::new("/static", "./frontend/dist/browser"))
+            .service(actix_files::Files::new(
+                "/static",
+                "./frontend/dist/browser",
+            ))
             .service(user::controller::profile)
             .service(user::controller::delete)
             .service(user::controller::register)
@@ -183,7 +186,8 @@ async fn init_db_indexes(conn: &Client) {
     let col_histories: mongodb::Collection<History> =
         conn.database("mangayomi").collection("histories");
     let col_updates: mongodb::Collection<Update> = conn.database("mangayomi").collection("updates");
-    let col_settings: mongodb::Collection<Update> = conn.database("mangayomi").collection("settings");
+    let col_settings: mongodb::Collection<Update> =
+        conn.database("mangayomi").collection("settings");
     let opts = IndexOptions::builder().unique(true).build();
     let idx = IndexModel::builder()
         .keys(doc! { "id": -1, "user": -1 })

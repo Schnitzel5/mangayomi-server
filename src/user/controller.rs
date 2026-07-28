@@ -1,13 +1,13 @@
-use actix_files::NamedFile;
 use crate::user::model::{BasicUser, UpdateUser};
 use crate::user::service::{delete_account, login_account, register_account, update_account};
+use actix_files::NamedFile;
 use actix_http::HttpMessage;
 use actix_identity::Identity;
 use actix_web::error::ErrorBadRequest;
 use actix_web::web::Data;
-use actix_web::{HttpRequest, HttpResponse, Responder, Result, get, post, web, delete};
-use mongodb::bson::oid::ObjectId;
+use actix_web::{HttpRequest, HttpResponse, Responder, Result, delete, get, post, web};
 use mongodb::Client;
+use mongodb::bson::oid::ObjectId;
 use validator::Validate;
 
 /// register a new account with the given email and password
@@ -54,8 +54,17 @@ async fn logout(user: Identity) -> Result<String> {
 
 /// update account
 #[post("/profile")]
-async fn profile(client: Data<Client>, user: Identity, data: web::Json<UpdateUser>) -> impl Responder {
-    let success = update_account(client, ObjectId::parse_str(&user.id().unwrap()).unwrap(), &data).await;
+async fn profile(
+    client: Data<Client>,
+    user: Identity,
+    data: web::Json<UpdateUser>,
+) -> impl Responder {
+    let success = update_account(
+        client,
+        ObjectId::parse_str(&user.id().unwrap()).unwrap(),
+        &data,
+    )
+    .await;
     if success {
         return HttpResponse::Ok().body("Account updated!".to_string());
     }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct History {
-    #[serde(rename="_id", skip_serializing)]
+    #[serde(rename = "_id", skip_serializing)]
     pub oid: Option<ObjectId>,
     pub id: i32,
     pub date: String,

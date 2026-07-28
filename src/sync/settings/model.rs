@@ -92,6 +92,12 @@ pub struct Settings {
     #[serde(rename = "userAgent")]
     pub user_agent: Option<String>,
 
+    #[serde(rename = "updateErrorsList")]
+    pub update_errors_list: Option<Vec<UpdateError>>,
+
+    #[serde(rename = "savedSearchesList")]
+    pub saved_searches_list: Option<Vec<SavedSearch>>,
+
     #[serde(rename = "defaultReaderMode")]
     pub default_reader_mode: i32,
 
@@ -259,6 +265,12 @@ pub struct Settings {
 
     #[serde(rename = "doHProviderId")]
     pub doh_provider_id: Option<i64>,
+
+    #[serde(rename = "customDohUrl")]
+    pub custom_doh_url: Option<String>,
+
+    #[serde(rename = "cfProxyUrl")]
+    pub cf_proxy_url: Option<String>,
 
     #[serde(rename = "btServerAddress")]
     pub bt_server_address: Option<String>,
@@ -473,6 +485,9 @@ pub struct Settings {
     #[serde(rename = "showPageGaps")]
     pub show_page_gaps: Option<bool>,
 
+    #[serde(rename = "autoReadDuplicateChapters")]
+    pub auto_read_duplicate_chapters: Option<bool>,
+
     #[serde(rename = "invertColors")]
     pub invert_colors: Option<bool>,
 
@@ -497,6 +512,9 @@ pub struct Settings {
     #[serde(rename = "showNSFW")]
     pub show_nsfw: Option<bool>,
 
+    #[serde(rename = "showSourceBadge")]
+    pub show_source_badge: Option<bool>,
+
     #[serde(rename = "ttsSpeechRate")]
     pub tts_speech_rate: Option<f64>,
 
@@ -508,6 +526,88 @@ pub struct Settings {
 
     #[serde(rename = "ttsVoice")]
     pub tts_voice: Option<String>,
+
+    #[serde(rename = "splitWidePages")]
+    pub split_wide_pages: Option<bool>,
+
+    #[serde(rename = "dualPageInvert")]
+    pub dual_page_invert: Option<bool>,
+
+    #[serde(rename = "dualPageRotateToFit")]
+    pub dual_page_rotate_to_fit: Option<bool>,
+
+    #[serde(rename = "dualPageRotateToFitInvert")]
+    pub dual_page_rotate_to_fit_invert: Option<bool>,
+
+    #[serde(rename = "landscapeZoom")]
+    pub landscape_zoom: Option<bool>,
+
+    #[serde(rename = "zoomStartPosition")]
+    pub zoom_start_position: Option<i32>,
+
+    #[serde(rename = "automaticBackground")]
+    pub automatic_background: Option<bool>,
+
+    #[serde(rename = "navigateToPan")]
+    pub navigate_to_pan: Option<bool>,
+
+    #[serde(rename = "tappingInversion")]
+    pub tapping_inversion: Option<i32>,
+
+    #[serde(rename = "flashOnPageChange")]
+    pub flash_on_page_change: Option<bool>,
+
+    #[serde(rename = "flashDuration")]
+    pub flash_duration: Option<i32>,
+
+    #[serde(rename = "flashInterval")]
+    pub flash_interval: Option<i32>,
+
+    #[serde(rename = "flashColor")]
+    pub flash_color: Option<i32>,
+
+    #[serde(rename = "showNavigationOverlayOnStart")]
+    pub show_navigation_overlay_on_start: Option<bool>,
+
+    #[serde(rename = "webtoonDisableZoomOut")]
+    pub webtoon_disable_zoom_out: Option<bool>,
+
+    #[serde(rename = "webtoonDoubleTapZoomEnabled")]
+    pub webtoon_double_tap_zoom_enabled: Option<bool>,
+
+    #[serde(rename = "readerHideThreshold")]
+    pub reader_hide_threshold: Option<i32>,
+
+    #[serde(rename = "autoPlayNextEpisode")]
+    pub auto_play_next_episode: Option<bool>,
+
+    #[serde(rename = "tvAnimeOnlyOverride")]
+    pub tv_anime_only_override: Option<bool>,
+
+    #[serde(rename = "tvPlayerStyle")]
+    pub tv_player_style: Option<bool>,
+
+    #[serde(rename = "tvHomeStyle")]
+    pub tv_home_style: Option<bool>,
+
+    #[serde(rename = "tvHomeGenreRows")]
+    pub tv_home_genre_rows: Option<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateError {
+    #[serde(rename = "mangaId")]
+    pub manga_id: Option<i32>,
+    pub name: Option<String>,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SavedSearch {
+    #[serde(rename = "sourceId")]
+    pub source_id: Option<i32>,
+    pub name: Option<String>,
+    pub query: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -668,4 +768,100 @@ pub struct AlgorithmWeights {
 #[derive(Serialize, Deserialize)]
 pub struct SettingsObj {
     pub settings: Option<Settings>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Settings;
+    use mongodb::bson::{doc, from_document, to_document};
+
+    #[test]
+    fn preserves_current_upstream_settings_fields() {
+        let input = doc! {
+            "id": 227,
+            "updatedAt": 1_i64,
+            "displayType": 0,
+            "defaultReaderMode": 0,
+            "animeDisplayType": 0,
+            "scaleType": 0,
+            "backgroundColor": 0,
+            "colorFilterBlendMode": 0,
+            "mangaHomeDisplayType": 0,
+            "disableSectionType": 0,
+            "novelDisplayType": 0,
+            "novelTextAlign": 0,
+            "updateErrorsList": vec![doc! {
+                "mangaId": 1,
+                "name": "Manga",
+                "error": "Network error",
+            }],
+            "savedSearchesList": vec![doc! {
+                "sourceId": 2,
+                "name": "Favorites",
+                "query": "genre=action",
+            }],
+            "customDohUrl": "https://dns.example/dns-query",
+            "cfProxyUrl": "https://proxy.example",
+            "autoReadDuplicateChapters": true,
+            "showSourceBadge": true,
+            "splitWidePages": true,
+            "dualPageInvert": true,
+            "dualPageRotateToFit": true,
+            "dualPageRotateToFitInvert": true,
+            "landscapeZoom": true,
+            "zoomStartPosition": 1,
+            "automaticBackground": true,
+            "navigateToPan": true,
+            "tappingInversion": 2,
+            "flashOnPageChange": true,
+            "flashDuration": 100,
+            "flashInterval": 50,
+            "flashColor": 0xFFFFFF,
+            "showNavigationOverlayOnStart": true,
+            "webtoonDisableZoomOut": true,
+            "webtoonDoubleTapZoomEnabled": true,
+            "readerHideThreshold": 3,
+            "autoPlayNextEpisode": true,
+            "tvAnimeOnlyOverride": true,
+            "tvPlayerStyle": true,
+            "tvHomeStyle": true,
+            "tvHomeGenreRows": true,
+        };
+
+        let settings: Settings = from_document(input.clone()).unwrap();
+        let output = to_document(&settings).unwrap();
+
+        for key in [
+            "updateErrorsList",
+            "savedSearchesList",
+            "customDohUrl",
+            "cfProxyUrl",
+            "autoReadDuplicateChapters",
+            "showSourceBadge",
+            "splitWidePages",
+            "dualPageInvert",
+            "dualPageRotateToFit",
+            "dualPageRotateToFitInvert",
+            "landscapeZoom",
+            "zoomStartPosition",
+            "automaticBackground",
+            "navigateToPan",
+            "tappingInversion",
+            "flashOnPageChange",
+            "flashDuration",
+            "flashInterval",
+            "flashColor",
+            "showNavigationOverlayOnStart",
+            "webtoonDisableZoomOut",
+            "webtoonDoubleTapZoomEnabled",
+            "readerHideThreshold",
+            "autoPlayNextEpisode",
+            "tvAnimeOnlyOverride",
+            "tvPlayerStyle",
+            "tvHomeStyle",
+            "tvHomeGenreRows",
+        ] {
+            assert_eq!(output.get(key), input.get(key), "field {key}");
+        }
+    }
 }
