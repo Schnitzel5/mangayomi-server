@@ -1,10 +1,6 @@
+use crate::sync::common::Model;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-
-pub trait Model {
-    fn get_id(&self) -> i32;
-    fn get_updated_at(&self) -> i64;
-}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Category {

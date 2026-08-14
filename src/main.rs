@@ -1,6 +1,3 @@
-use crate::sync::history::model::History;
-use crate::sync::manga::model::{Category, Chapter, Manga, Track};
-use crate::sync::update::model::Update;
 use actix_governor::governor::middleware::NoOpMiddleware;
 use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
 use actix_identity::IdentityMiddleware;
@@ -71,6 +68,7 @@ async fn main() -> std::io::Result<()> {
     log::info!("Initialized Tera.");
 
     let conn = db::CONN.get().unwrap();
+    let live_sync_hub = web::Data::new(sync::live::LiveSyncHub::default());
 
     init_db_indexes(conn).await;
 
@@ -112,6 +110,7 @@ async fn main() -> std::io::Result<()> {
             )
             .app_data(web::Data::new(conn.clone()))
             .app_data(web::Data::new(tera.clone()))
+            .app_data(live_sync_hub.clone())
             .service(actix_files::Files::new("/assets", "./resources/assets"))
             .service(actix_files::Files::new(
                 "/static",
@@ -135,6 +134,7 @@ async fn main() -> std::io::Result<()> {
 fn sync_controller() -> Scope {
     web::scope("/sync")
         .app_data(web::JsonConfig::default().limit(250 << 20))
+        .service(sync::live::controller::live_sync)
         .service(sync::manga::controller::sync_manga)
         .service(sync::history::controller::sync_histories)
         .service(sync::update::controller::sync_updates)
@@ -177,48 +177,38 @@ fn get_templates() -> Vec<(String, String)> {
 }
 
 async fn init_db_indexes(conn: &Client) {
-    let col_categories: mongodb::Collection<Category> =
-        conn.database("mangayomi").collection("categories");
-    let col_manga: mongodb::Collection<Manga> = conn.database("mangayomi").collection("manga");
-    let col_chapter: mongodb::Collection<Chapter> =
-        conn.database("mangayomi").collection("chapters");
-    let col_track: mongodb::Collection<Track> = conn.database("mangayomi").collection("tracks");
-    let col_histories: mongodb::Collection<History> =
-        conn.database("mangayomi").collection("histories");
-    let col_updates: mongodb::Collection<Update> = conn.database("mangayomi").collection("updates");
-    let col_settings: mongodb::Collection<Update> =
-        conn.database("mangayomi").collection("settings");
-    let opts = IndexOptions::builder().unique(true).build();
+    // Uniqueness of {id, user} is defense-in-depth (upserts are conditional
+    // pipelines, not insert-on-stale); still refuse to run without it.
     let idx = IndexModel::builder()
         .keys(doc! { "id": -1, "user": -1 })
-        .options(opts)
+        .options(IndexOptions::builder().unique(true).build())
         .build();
-    match col_categories.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created categories index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create categories index."),
-    };
-    match col_manga.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created manga index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create manga index."),
-    };
-    match col_chapter.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created chapters index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create chapters index."),
-    };
-    match col_track.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created tracks index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create tracks index."),
-    };
-    match col_histories.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created histories index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create histories index."),
-    };
-    match col_updates.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created updates index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create updates index."),
-    };
-    match col_settings.create_index(idx.clone()).await {
-        Ok(result) => log::info!("Created settings index: {}", result.index_name),
-        Err(_) => log::info!("Failed to create settings index."),
-    };
+    for coll in [
+        "categories",
+        "manga",
+        "chapters",
+        "tracks",
+        "histories",
+        "updates",
+        "settings",
+    ] {
+        let result = conn
+            .database("mangayomi")
+            .collection::<mongodb::bson::Document>(coll)
+            .create_index(idx.clone())
+            .await
+            .unwrap_or_else(|err| panic!("Failed to create {coll} index: {err}"));
+        log::info!("Created {} index: {}", coll, result.index_name);
+    }
+    let tombstone_idx = IndexModel::builder()
+        .keys(doc! { "user": -1, "coll": -1, "id": -1 })
+        .options(IndexOptions::builder().unique(true).build())
+        .build();
+    let result = conn
+        .database("mangayomi")
+        .collection::<mongodb::bson::Document>(sync::common::TOMBSTONES)
+        .create_index(tombstone_idx)
+        .await
+        .unwrap_or_else(|err| panic!("Failed to create tombstones index: {err}"));
+    log::info!("Created tombstones index: {}", result.index_name);
 }

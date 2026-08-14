@@ -24,3 +24,12 @@ pub struct UpdateList {
     #[serde(rename = "resetAll")]
     pub reset_all: Option<bool>,
 }
+
+impl crate::sync::common::Model for Update {
+    fn get_id(&self) -> i32 {
+        self.id
+    }
+    fn get_updated_at(&self) -> i64 {
+        self.updated_at
+    }
+}

@@ -865,3 +865,12 @@ mod tests {
         }
     }
 }
+
+impl crate::sync::common::Model for Settings {
+    fn get_id(&self) -> i32 {
+        self.id
+    }
+    fn get_updated_at(&self) -> i64 {
+        self.updated_at
+    }
+}
