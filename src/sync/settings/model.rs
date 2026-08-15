@@ -92,6 +92,9 @@ pub struct Settings {
     #[serde(rename = "userAgent")]
     pub user_agent: Option<String>,
 
+    #[serde(rename = "cookiesList")]
+    pub cookies_list: Option<Vec<MCookie>>,
+
     #[serde(rename = "updateErrorsList")]
     pub update_errors_list: Option<Vec<UpdateError>>,
 
@@ -320,6 +323,12 @@ pub struct Settings {
     #[serde(rename = "androidProxyServer")]
     pub android_proxy_server: Option<String>,
 
+    #[serde(rename = "jrePath")]
+    pub jre_path: Option<String>,
+
+    #[serde(rename = "extensionServerPath")]
+    pub extension_server_path: Option<String>,
+
     #[serde(rename = "disableSectionType")]
     pub disable_section_type: i32,
 
@@ -457,6 +466,9 @@ pub struct Settings {
 
     #[serde(rename = "localFolders")]
     pub local_folders: Option<Vec<String>>,
+
+    #[serde(rename = "appLockEnabled")]
+    pub app_lock_enabled: Option<bool>,
 
     #[serde(rename = "libraryFilterMangasCompletedType")]
     pub library_filter_mangas_completed_type: Option<i32>,
@@ -608,6 +620,12 @@ pub struct SavedSearch {
     pub source_id: Option<i32>,
     pub name: Option<String>,
     pub query: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MCookie {
+    pub host: Option<String>,
+    pub cookie: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -777,7 +795,7 @@ mod tests {
 
     #[test]
     fn preserves_current_upstream_settings_fields() {
-        let input = doc! {
+        let mut input = doc! {
             "id": 227,
             "updatedAt": 1_i64,
             "displayType": 0,
@@ -827,6 +845,16 @@ mod tests {
             "tvHomeStyle": true,
             "tvHomeGenreRows": true,
         };
+        input.insert(
+            "cookiesList",
+            vec![doc! {
+                "host": "example.com",
+                "cookie": "session=value",
+            }],
+        );
+        input.insert("jrePath", "/opt/java");
+        input.insert("extensionServerPath", "/opt/mangayomi/server.jar");
+        input.insert("appLockEnabled", true);
 
         let settings: Settings = from_document(input.clone()).unwrap();
         let output = to_document(&settings).unwrap();
@@ -836,6 +864,10 @@ mod tests {
             "savedSearchesList",
             "customDohUrl",
             "cfProxyUrl",
+            "cookiesList",
+            "jrePath",
+            "extensionServerPath",
+            "appLockEnabled",
             "autoReadDuplicateChapters",
             "showSourceBadge",
             "splitWidePages",

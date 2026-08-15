@@ -17,6 +17,8 @@ pub struct History {
     pub user: Option<ObjectId>,
     #[serde(rename = "updatedAt")]
     pub updated_at: i64,
+    #[serde(rename = "readingTimeSeconds")]
+    pub reading_time_seconds: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -33,5 +35,32 @@ impl crate::sync::common::Model for History {
     }
     fn get_updated_at(&self) -> i64 {
         self.updated_at
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::History;
+    use mongodb::bson::{doc, from_document, to_document};
+
+    #[test]
+    fn preserves_current_upstream_history_fields() {
+        let input = doc! {
+            "id": 1,
+            "date": "2026-08-15T00:00:00Z",
+            "mangaId": 2,
+            "chapterId": 3,
+            "itemType": 0,
+            "updatedAt": 1_i64,
+            "readingTimeSeconds": 120,
+        };
+
+        let history: History = from_document(input.clone()).unwrap();
+        let output = to_document(&history).unwrap();
+
+        assert_eq!(
+            output.get("readingTimeSeconds"),
+            input.get("readingTimeSeconds")
+        );
     }
 }

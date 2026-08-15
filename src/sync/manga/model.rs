@@ -55,8 +55,12 @@ pub struct Manga {
     pub last_read: Option<i64>,
     #[serde(rename = "isLocalArchive")]
     pub is_local_archive: Option<bool>,
+    #[serde(rename = "customCoverImage")]
+    pub custom_cover_image: Option<Vec<u8>>,
     #[serde(rename = "customCoverFromTracker")]
     pub custom_cover_from_tracker: Option<String>,
+    #[serde(rename = "smartUpdateDays")]
+    pub smart_update_days: Option<i32>,
     #[serde(rename = "itemType")]
     pub item_type: i32,
     pub genre: Option<Vec<String>>,
@@ -94,6 +98,14 @@ pub struct Chapter {
     pub last_page_read: Option<String>,
     #[serde(rename = "archivePath")]
     pub archive_path: Option<String>,
+    #[serde(rename = "isFiller")]
+    pub is_filler: Option<bool>,
+    #[serde(rename = "thumbnailUrl")]
+    pub thumbnail_url: Option<String>,
+    pub description: Option<String>,
+    #[serde(rename = "downloadSize")]
+    pub download_size: Option<String>,
+    pub duration: Option<String>,
     #[serde(rename = "mangaId")]
     pub manga_id: i32,
     #[serde(skip_serializing)]
@@ -168,4 +180,62 @@ pub struct MangaList {
     pub deleted_tracks: Vec<i32>,
     #[serde(rename = "resetAll")]
     pub reset_all: Option<bool>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Chapter, Manga};
+    use mongodb::bson::{doc, from_document, to_document};
+
+    #[test]
+    fn preserves_current_upstream_manga_and_chapter_fields() {
+        let manga_input = doc! {
+            "id": 1,
+            "name": "Manga",
+            "link": "/manga",
+            "imageUrl": "https://example.com/cover.jpg",
+            "status": 0,
+            "favorite": true,
+            "source": "Example",
+            "lang": "en",
+            "itemType": 0,
+            "updatedAt": 1_i64,
+            "customCoverImage": vec![1_i32, 2_i32, 3_i32],
+            "smartUpdateDays": 7,
+        };
+        let manga: Manga = from_document(manga_input.clone()).unwrap();
+        let manga_output = to_document(&manga).unwrap();
+        for key in ["customCoverImage", "smartUpdateDays"] {
+            assert_eq!(manga_output.get(key), manga_input.get(key), "field {key}");
+        }
+
+        let chapter_input = doc! {
+            "id": 2,
+            "name": "Chapter",
+            "isBookmarked": false,
+            "isRead": false,
+            "mangaId": 1,
+            "updatedAt": 1_i64,
+            "isFiller": true,
+            "thumbnailUrl": "https://example.com/chapter.jpg",
+            "description": "Synopsis",
+            "downloadSize": "42 MB",
+            "duration": "24:00",
+        };
+        let chapter: Chapter = from_document(chapter_input.clone()).unwrap();
+        let chapter_output = to_document(&chapter).unwrap();
+        for key in [
+            "isFiller",
+            "thumbnailUrl",
+            "description",
+            "downloadSize",
+            "duration",
+        ] {
+            assert_eq!(
+                chapter_output.get(key),
+                chapter_input.get(key),
+                "field {key}"
+            );
+        }
+    }
 }
