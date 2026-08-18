@@ -177,11 +177,15 @@ fn get_templates() -> Vec<(String, String)> {
 }
 
 async fn init_db_indexes(conn: &Client) {
-    // Uniqueness of {id, user} is defense-in-depth (upserts are conditional
-    // pipelines, not insert-on-stale); still refuse to run without it.
+    // User-first ordering serves both point upserts and full per-user reads.
     let idx = IndexModel::builder()
-        .keys(doc! { "id": -1, "user": -1 })
-        .options(IndexOptions::builder().unique(true).build())
+        .keys(doc! { "user": 1, "id": 1 })
+        .options(
+            IndexOptions::builder()
+                .name("sync_user_id".to_string())
+                .unique(true)
+                .build(),
+        )
         .build();
     for coll in [
         "categories",
@@ -192,13 +196,17 @@ async fn init_db_indexes(conn: &Client) {
         "updates",
         "settings",
     ] {
-        let result = conn
+        let collection = conn
             .database("mangayomi")
-            .collection::<mongodb::bson::Document>(coll)
+            .collection::<mongodb::bson::Document>(coll);
+        let result = collection
             .create_index(idx.clone())
             .await
             .unwrap_or_else(|err| panic!("Failed to create {coll} index: {err}"));
         log::info!("Created {} index: {}", coll, result.index_name);
+        if let Err(err) = collection.drop_index("id_-1_user_-1").await {
+            log::debug!("No obsolete {coll} index to remove: {err}");
+        }
     }
     let tombstone_idx = IndexModel::builder()
         .keys(doc! { "user": -1, "coll": -1, "id": -1 })

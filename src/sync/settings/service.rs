@@ -13,7 +13,14 @@ pub async fn sync_settings(
     let col_settings: Collection<Settings> = db.database("mangayomi").collection("settings");
 
     if let Some(settings) = &settings.settings {
-        upsert(&db, "settings", user_id, std::slice::from_ref(settings), true).await?;
+        upsert(
+            &db,
+            "settings",
+            user_id,
+            std::slice::from_ref(settings),
+            true,
+        )
+        .await?;
     }
 
     let found = col_settings.find_one(doc! { "user": user_id }).await?;

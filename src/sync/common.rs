@@ -16,6 +16,32 @@ pub trait Model {
     fn get_updated_at(&self) -> i64;
 }
 
+#[derive(Deserialize)]
+struct StoredVersion {
+    id: i32,
+    #[serde(rename = "updatedAt")]
+    updated_at: Option<i64>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct UpsertPlan {
+    write: bool,
+    revive: bool,
+}
+
+fn plan_upsert(updated_at: i64, deleted_at: Option<i64>, stored_at: Option<i64>) -> UpsertPlan {
+    if deleted_at.is_some_and(|deleted_at| updated_at <= deleted_at) {
+        return UpsertPlan {
+            write: false,
+            revive: false,
+        };
+    }
+    UpsertPlan {
+        write: stored_at.is_none_or(|stored_at| updated_at > stored_at),
+        revive: deleted_at.is_some(),
+    }
+}
+
 const DB: &str = "mangayomi";
 pub const TOMBSTONES: &str = "tombstones";
 
@@ -49,7 +75,7 @@ pub async fn sync_collection<T>(
     reset_all: bool,
 ) -> SyncResult<(Vec<T>, Vec<i32>)>
 where
-    T: Model + Serialize + DeserializeOwned + Unpin + Send + Sync,
+    T: Clone + Model + Serialize + DeserializeOwned + Unpin + Send + Sync,
 {
     let collection: Collection<T> = db.database(DB).collection(coll_name);
     let tombstones: Collection<Tombstone> = db.database(DB).collection(TOMBSTONES);
@@ -65,30 +91,37 @@ where
         tombstones
             .delete_many(doc! { "user": user_id, "coll": coll_name })
             .await?;
-    } else {
-        upsert(db, coll_name, user_id, items, true).await?;
-        if !deleted_ids.is_empty() {
-            collection
-                .delete_many(doc! { "user": user_id, "id": { "$in": deleted_ids.to_vec() } })
-                .await?;
-            bury(db, coll_name, user_id, deleted_ids).await?;
-        }
+        return Ok((items.to_vec(), Vec::new()));
     }
 
-    let docs = collection
-        .find(doc! { "user": user_id })
-        .await?
-        .try_collect()
-        .await?;
-    let dead = tombstones
-        .find(doc! { "user": user_id, "coll": coll_name })
-        .await?
-        .try_collect::<Vec<_>>()
-        .await?
-        .into_iter()
-        .map(|t| t.id)
-        .collect();
-    Ok((docs, dead))
+    upsert(db, coll_name, user_id, items, true).await?;
+    if !deleted_ids.is_empty() {
+        collection
+            .delete_many(doc! { "user": user_id, "id": { "$in": deleted_ids.to_vec() } })
+            .await?;
+        bury(db, coll_name, user_id, deleted_ids).await?;
+    }
+
+    let load_docs = async {
+        let docs = collection
+            .find(doc! { "user": user_id })
+            .await?
+            .try_collect::<Vec<_>>()
+            .await?;
+        Ok::<_, mongodb::error::Error>(docs)
+    };
+    let load_dead = async {
+        let dead = tombstones
+            .find(doc! { "user": user_id, "coll": coll_name })
+            .await?
+            .try_collect::<Vec<_>>()
+            .await?
+            .into_iter()
+            .map(|t| t.id)
+            .collect();
+        Ok::<_, mongodb::error::Error>(dead)
+    };
+    tokio::try_join!(load_docs, load_dead)
 }
 
 /// Last-write-wins upsert: the incoming doc replaces the stored one only when
@@ -109,32 +142,59 @@ where
     if items.is_empty() {
         return Ok(());
     }
+    let ids: Vec<i32> = items.iter().map(|item| item.get_id()).collect();
     let tombstones: Collection<Tombstone> = db.database(DB).collection(TOMBSTONES);
-    // ponytail: updatedAt and deletedAt come from client/server clocks; skew
-    // shifts which write wins, a logical clock fixes it if users complain.
-    let dead: HashMap<i32, i64> = if guard {
-        let ids: Vec<i32> = items.iter().map(|i| i.get_id()).collect();
-        tombstones
-            .find(doc! { "user": user_id, "coll": coll_name, "id": { "$in": ids } })
+    let versions: Collection<StoredVersion> = db.database(DB).collection(coll_name);
+    let load_dead = async {
+        // Settings cannot be deleted, so it has no tombstones to guard.
+        if !guard || coll_name == "settings" {
+            return Ok(HashMap::new());
+        }
+        let dead = tombstones
+            .find(doc! { "user": user_id, "coll": coll_name, "id": { "$in": &ids } })
             .await?
             .try_collect::<Vec<_>>()
             .await?
             .into_iter()
             .map(|t| (t.id, t.deleted_at))
-            .collect()
-    } else {
-        HashMap::new()
+            .collect();
+        Ok::<_, mongodb::error::Error>(dead)
     };
+    let load_current = async {
+        // ponytail: prefetch only batches; one guarded write is cheaper than
+        // an extra read, while full-library client payloads avoid no-op writes.
+        if !guard || items.len() <= 1 {
+            return Ok(HashMap::new());
+        }
+        let current = versions
+            .find(doc! { "user": user_id, "id": { "$in": &ids } })
+            .projection(doc! { "_id": 0, "id": 1, "updatedAt": 1 })
+            .await?
+            .try_collect::<Vec<_>>()
+            .await?
+            .into_iter()
+            .map(|item| (item.id, item.updated_at.unwrap_or(i64::MIN)))
+            .collect();
+        Ok::<_, mongodb::error::Error>(current)
+    };
+    let (dead, current): (HashMap<i32, i64>, HashMap<i32, i64>) =
+        tokio::try_join!(load_dead, load_current)?;
 
     let namespace = Namespace::new(DB, coll_name);
     let mut ops = vec![];
     let mut revived = vec![];
     for item in items {
-        if let Some(&deleted_at) = dead.get(&item.get_id()) {
-            if item.get_updated_at() <= deleted_at {
-                continue; // deletion is newer than this copy: deletion wins
-            }
-            revived.push(item.get_id());
+        let id = item.get_id();
+        let plan = plan_upsert(
+            item.get_updated_at(),
+            dead.get(&id).copied(),
+            current.get(&id).copied(),
+        );
+        if plan.revive {
+            revived.push(id);
+        }
+        if !plan.write {
+            continue;
         }
         let mut new_doc = to_document(item).expect("model serializes to BSON");
         new_doc.insert("user", user_id);
@@ -197,4 +257,48 @@ async fn bury(
         .collect();
     db.bulk_write(ops).ordered(false).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{UpsertPlan, plan_upsert};
+
+    #[test]
+    fn plans_only_newer_writes_and_tombstone_revivals() {
+        assert_eq!(
+            plan_upsert(10, Some(10), None),
+            UpsertPlan {
+                write: false,
+                revive: false,
+            }
+        );
+        assert_eq!(
+            plan_upsert(11, Some(10), Some(12)),
+            UpsertPlan {
+                write: false,
+                revive: true,
+            }
+        );
+        assert_eq!(
+            plan_upsert(12, Some(10), Some(11)),
+            UpsertPlan {
+                write: true,
+                revive: true,
+            }
+        );
+        assert_eq!(
+            plan_upsert(11, None, Some(11)),
+            UpsertPlan {
+                write: false,
+                revive: false,
+            }
+        );
+        assert_eq!(
+            plan_upsert(12, None, Some(11)),
+            UpsertPlan {
+                write: true,
+                revive: false,
+            }
+        );
+    }
 }

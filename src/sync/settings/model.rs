@@ -26,6 +26,15 @@ pub struct Settings {
     #[serde(rename = "libraryFilterMangasBookMarkedType")]
     pub library_filter_mangas_book_marked_type: Option<i32>,
 
+    #[serde(rename = "libraryFilterMangasSourceIds")]
+    pub library_filter_mangas_source_ids: Option<Vec<String>>,
+
+    #[serde(rename = "libraryFilterAnimeSourceIds")]
+    pub library_filter_anime_source_ids: Option<Vec<String>>,
+
+    #[serde(rename = "libraryFilterNovelSourceIds")]
+    pub library_filter_novel_source_ids: Option<Vec<String>>,
+
     #[serde(rename = "libraryShowCategoryTabs")]
     pub library_show_category_tabs: Option<bool>,
 
@@ -61,6 +70,9 @@ pub struct Settings {
 
     #[serde(rename = "flexColorSchemeBlendLevel")]
     pub flex_color_scheme_blend_level: Option<f64>,
+
+    #[serde(rename = "appUiScale")]
+    pub app_ui_scale: Option<f64>,
 
     #[serde(rename = "dateFormat")]
     pub date_format: Option<String>,
@@ -130,6 +142,15 @@ pub struct Settings {
 
     #[serde(rename = "concurrentDownloads")]
     pub concurrent_downloads: Option<i32>,
+
+    #[serde(rename = "allowConcurrentDownloads")]
+    pub allow_concurrent_downloads: Option<bool>,
+
+    #[serde(rename = "downloadDelaySeconds")]
+    pub download_delay_seconds: Option<i32>,
+
+    #[serde(rename = "downloadQueueOrder")]
+    pub download_queue_order: Option<Vec<i32>>,
 
     #[serde(rename = "downloadLocation")]
     pub download_location: Option<String>,
@@ -421,6 +442,15 @@ pub struct Settings {
 
     #[serde(rename = "enableDiscordRpc")]
     pub enable_discord_rpc: Option<bool>,
+
+    #[serde(rename = "enableMetadataFetch")]
+    pub enable_metadata_fetch: Option<bool>,
+
+    #[serde(rename = "metadataDomain")]
+    pub metadata_domain: Option<String>,
+
+    #[serde(rename = "metadataMergeGenres")]
+    pub metadata_merge_genres: Option<bool>,
 
     #[serde(rename = "hideDiscordRpcInIncognito")]
     pub hide_discord_rpc_in_incognito: Option<bool>,
@@ -855,11 +885,31 @@ mod tests {
         input.insert("jrePath", "/opt/java");
         input.insert("extensionServerPath", "/opt/mangayomi/server.jar");
         input.insert("appLockEnabled", true);
+        input.insert("libraryFilterMangasSourceIds", vec!["manga-source"]);
+        input.insert("libraryFilterAnimeSourceIds", vec!["anime-source"]);
+        input.insert("libraryFilterNovelSourceIds", vec!["novel-source"]);
+        input.insert("appUiScale", 1.25);
+        input.insert("allowConcurrentDownloads", true);
+        input.insert("downloadDelaySeconds", 3);
+        input.insert("downloadQueueOrder", vec![3, 1, 2]);
+        input.insert("enableMetadataFetch", true);
+        input.insert("metadataDomain", "meta.example.com");
+        input.insert("metadataMergeGenres", false);
 
         let settings: Settings = from_document(input.clone()).unwrap();
         let output = to_document(&settings).unwrap();
 
         for key in [
+            "libraryFilterMangasSourceIds",
+            "libraryFilterAnimeSourceIds",
+            "libraryFilterNovelSourceIds",
+            "appUiScale",
+            "allowConcurrentDownloads",
+            "downloadDelaySeconds",
+            "enableMetadataFetch",
+            "metadataDomain",
+            "metadataMergeGenres",
+            "downloadQueueOrder",
             "updateErrorsList",
             "savedSearchesList",
             "customDohUrl",

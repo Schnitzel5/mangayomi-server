@@ -35,6 +35,14 @@ pub struct Manga {
     pub oid: Option<ObjectId>,
     pub id: i32,
     pub name: String,
+    #[serde(rename = "titleEnglish")]
+    pub title_english: Option<String>,
+    #[serde(rename = "titleRomaji")]
+    pub title_romaji: Option<String>,
+    #[serde(rename = "titleNative")]
+    pub title_native: Option<String>,
+    #[serde(rename = "displayTitle")]
+    pub display_title: Option<String>,
     pub link: String,
     #[serde(rename = "imageUrl")]
     pub image_url: String,
@@ -202,10 +210,21 @@ mod tests {
             "updatedAt": 1_i64,
             "customCoverImage": vec![1_i32, 2_i32, 3_i32],
             "smartUpdateDays": 7,
+            "titleEnglish": "Berserk",
+            "titleRomaji": "Berserk",
+            "titleNative": "ベルセルク",
+            "displayTitle": "Berserk",
         };
         let manga: Manga = from_document(manga_input.clone()).unwrap();
         let manga_output = to_document(&manga).unwrap();
-        for key in ["customCoverImage", "smartUpdateDays"] {
+        for key in [
+            "customCoverImage",
+            "smartUpdateDays",
+            "titleEnglish",
+            "titleRomaji",
+            "titleNative",
+            "displayTitle",
+        ] {
             assert_eq!(manga_output.get(key), manga_input.get(key), "field {key}");
         }
 
