@@ -2024,6 +2024,7 @@ dependencies = [
  "regex",
  "secrecy",
  "serde",
+ "serde_json",
  "tera",
  "tokio",
  "totp-rs",

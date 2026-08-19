@@ -12,6 +12,7 @@ const MAX_CLIENT_ID_LENGTH: usize = 128;
 struct LiveSyncQuery {
     #[serde(rename = "clientId")]
     client_id: String,
+    device: Option<String>,
 }
 
 #[get("/live")]
@@ -25,8 +26,9 @@ pub async fn live_sync(
     validate_client_id(&query.client_id)?;
     let user_id = user.id()?;
     let (response, session, messages) = actix_ws::handle(&request, payload)?;
-    let client_id = query.into_inner().client_id;
-    let (connection_id, outgoing) = hub.register(&user_id, client_id);
+    let query = query.into_inner();
+    let device = sanitize_device(query.device);
+    let (connection_id, outgoing) = hub.register(&user_id, query.client_id, device);
 
     actix_web::rt::spawn(run_connection(
         session,
@@ -53,10 +55,25 @@ fn validate_client_id(client_id: &str) -> Result<()> {
     Ok(())
 }
 
+fn sanitize_device(device: Option<String>) -> String {
+    let cleaned: String = device
+        .unwrap_or_default()
+        .chars()
+        .filter(|character| !character.is_control())
+        .take(64)
+        .collect();
+    let cleaned = cleaned.trim();
+    if cleaned.is_empty() {
+        "Unknown device".to_owned()
+    } else {
+        cleaned.to_owned()
+    }
+}
+
 async fn run_connection(
     mut session: actix_ws::Session,
     mut messages: actix_ws::MessageStream,
-    mut outgoing: tokio::sync::mpsc::UnboundedReceiver<&'static str>,
+    mut outgoing: tokio::sync::mpsc::UnboundedReceiver<String>,
     hub: web::Data<LiveSyncHub>,
     user_id: String,
     connection_id: u64,
