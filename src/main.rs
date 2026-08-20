@@ -24,6 +24,7 @@ mod config;
 mod db;
 mod setup;
 mod sync;
+mod update;
 mod user;
 
 #[derive(Debug, Parser)]
@@ -78,6 +79,9 @@ async fn serve(path: Option<PathBuf>) -> io::Result<()> {
 
     unsafe { std::env::set_var("RUST_LOG", "debug") };
     env_logger::init();
+    if config.check_for_updates {
+        tokio::spawn(update::check_for_update());
+    }
     let tera = initialize_tera()?;
     let live_sync_hub = web::Data::new(sync::live::LiveSyncHub::default());
     let database = config.database_db.clone();

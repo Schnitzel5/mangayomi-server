@@ -17,6 +17,7 @@ pub struct Config {
     pub port: u16,
     pub session_ttl_days: i64,
     pub allow_registration: bool,
+    pub check_for_updates: bool,
     pub secret_key: [u8; 64],
 }
 
@@ -34,6 +35,7 @@ pub struct RawConfig {
     pub port: Option<String>,
     pub session_ttl_days: Option<String>,
     pub allow_registration: Option<String>,
+    pub check_for_updates: Option<String>,
     pub secret_key: Option<String>,
 }
 
@@ -59,6 +61,7 @@ pub fn load_raw(path: &Path) -> Result<RawConfig, String> {
         "PORT",
         "SESSION_TTL_DAYS",
         "ALLOW_REGISTRATION",
+        "CHECK_FOR_UPDATES",
         "SECRET_KEY",
     ] {
         if let Ok(value) = env::var(key) {
@@ -73,6 +76,7 @@ pub fn load_raw(path: &Path) -> Result<RawConfig, String> {
         port: values.remove("PORT"),
         session_ttl_days: values.remove("SESSION_TTL_DAYS"),
         allow_registration: values.remove("ALLOW_REGISTRATION"),
+        check_for_updates: values.remove("CHECK_FOR_UPDATES"),
         secret_key: values.remove("SECRET_KEY"),
     })
 }
@@ -110,7 +114,14 @@ fn from_raw_with_secret(
     if session_ttl_days <= 0 {
         return Err("SESSION_TTL_DAYS must be a positive integer".to_owned());
     }
-    let allow_registration = parse_bool(raw.allow_registration.as_deref().unwrap_or("false"))?;
+    let allow_registration = parse_bool(
+        raw.allow_registration.as_deref().unwrap_or("false"),
+        "ALLOW_REGISTRATION",
+    )?;
+    let check_for_updates = parse_bool(
+        raw.check_for_updates.as_deref().unwrap_or("true"),
+        "CHECK_FOR_UPDATES",
+    )?;
     let secret_key = match raw.secret_key {
         Some(value) => parse_secret(&value)?,
         None if generate_missing_secret => generate_secret(),
@@ -124,6 +135,7 @@ fn from_raw_with_secret(
         port,
         session_ttl_days,
         allow_registration,
+        check_for_updates,
         secret_key,
     })
 }
@@ -138,11 +150,11 @@ fn parse_port(value: &str) -> Result<u16, String> {
     Ok(port)
 }
 
-fn parse_bool(value: &str) -> Result<bool, String> {
+fn parse_bool(value: &str, name: &str) -> Result<bool, String> {
     match value.trim().to_ascii_lowercase().as_str() {
         "true" | "1" | "yes" => Ok(true),
         "false" | "0" | "no" => Ok(false),
-        _ => Err("ALLOW_REGISTRATION must be true or false".to_owned()),
+        _ => Err(format!("{name} must be true or false")),
     }
 }
 
@@ -196,6 +208,7 @@ pub fn write_dotenv(path: &Path, config: &Config) -> io::Result<()> {
         ("PORT", config.port.to_string()),
         ("SESSION_TTL_DAYS", config.session_ttl_days.to_string()),
         ("ALLOW_REGISTRATION", config.allow_registration.to_string()),
+        ("CHECK_FOR_UPDATES", config.check_for_updates.to_string()),
         ("SECRET_KEY", secret_string(&config.secret_key)),
     ];
     let content = update_dotenv_content(&original, &updates);
@@ -255,6 +268,15 @@ mod tests {
         assert_eq!(config.port, 8080);
         assert_eq!(config.session_ttl_days, 30);
         assert!(!config.allow_registration);
+        assert!(config.check_for_updates);
+
+        let disabled = from_raw_for_setup(RawConfig {
+            database_url: Some("mongodb://localhost".to_owned()),
+            check_for_updates: Some("false".to_owned()),
+            ..RawConfig::default()
+        })
+        .expect("valid update setting");
+        assert!(!disabled.check_for_updates);
     }
 
     #[test]

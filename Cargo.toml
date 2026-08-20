@@ -36,3 +36,5 @@ validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
 rpassword = "7"
 tempfile = "3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+semver = "1"

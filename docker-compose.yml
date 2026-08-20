@@ -12,6 +12,7 @@ services:
       - SESSION_TTL_DAYS=${SESSION_TTL_DAYS:-30}
       - SECRET_KEY=${SECRET_KEY}
       - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-false}
+      - CHECK_FOR_UPDATES=${CHECK_FOR_UPDATES:-true}
     depends_on:
       database:
         condition: service_healthy

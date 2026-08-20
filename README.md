@@ -68,6 +68,11 @@ Sign in as the administrator and use the authenticated `POST /admin/users`
 endpoint to provision basic accounts. MongoDB remains an external service and
 must be available whenever the server runs.
 
+Update checks are enabled by default (`CHECK_FOR_UPDATES=true`). A running server
+checks GitHub Releases at startup without delaying startup and logs when a newer
+stable release is available. Set `CHECK_FOR_UPDATES=false` to disable network
+checks.
+
 ## Developer setup
 
 This path is for contributors working from a clone. Install Rust and MongoDB,
@@ -105,10 +110,12 @@ openssl rand -hex 64
 ```
 
 These are values you choose—the repository does not provide default credentials.
-`DATABASE_DB`, `SESSION_TTL_DAYS`, and `ALLOW_REGISTRATION` are also passed to
-the server. Compose supplies safe defaults for missing non-secret settings when
-an older host `.env` does not contain them, but it never supplies a secret or
-database credential.
+`DATABASE_DB`, `SESSION_TTL_DAYS`, `ALLOW_REGISTRATION`, and
+`CHECK_FOR_UPDATES` are also passed to the server. Set
+`CHECK_FOR_UPDATES=false` in the host `.env` to opt out of update checks.
+Compose supplies safe defaults for missing non-secret settings when an older
+host `.env` does not contain them, but it never supplies a secret or database
+credential.
 
 Run the one-time bootstrap interactively. Start MongoDB first, build the server
 image, then run setup from an attached terminal so you can enter the MongoDB

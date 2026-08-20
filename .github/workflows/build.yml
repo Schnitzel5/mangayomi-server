@@ -2,20 +2,21 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
 
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          default: true
-          override: true
 
       - name: Build
         run: cargo build --all --release && strip target/release/mangayomi-server && mv target/release/mangayomi-server target/release/mangayomi-server_amd64
@@ -33,7 +34,7 @@ jobs:
           tar -czf "dist/${bundle}.tar.gz" -C dist "${bundle}"
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
@@ -46,14 +47,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
 
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          default: true
-          override: true
 
       - name: Build
         run: cargo build --all --release
@@ -71,7 +70,7 @@ jobs:
           Compress-Archive -Path $root -DestinationPath (Join-Path "dist" "$bundle.zip")
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/mangayomi-server-windows-amd64.zip
@@ -83,15 +82,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
 
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          target: x86_64-apple-darwin
-          default: true
-          override: true
+          targets: x86_64-apple-darwin
 
       - name: Build for mac
         run: cargo build --all --release --target x86_64-apple-darwin && strip target/x86_64-apple-darwin/release/mangayomi-server
@@ -109,7 +106,7 @@ jobs:
           tar -czf "dist/${bundle}.tar.gz" -C dist "${bundle}"
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
