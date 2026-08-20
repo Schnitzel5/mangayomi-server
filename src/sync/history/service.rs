@@ -8,11 +8,13 @@ pub async fn sync_history_list(
     user_id: ObjectId,
     history_list: &web::Json<HistoryList>,
     db: web::Data<Client>,
+    database: &str,
 ) -> SyncResult<HistoryList> {
     let reset_all = history_list.reset_all.unwrap_or(false);
 
     let (histories, deleted_histories) = sync_collection(
         &db,
+        database,
         "histories",
         user_id,
         &history_list.histories,

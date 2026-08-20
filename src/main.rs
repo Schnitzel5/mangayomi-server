@@ -4,90 +4,89 @@ use actix_identity::IdentityMiddleware;
 use actix_session::SessionMiddleware;
 use actix_session::config::{CookieContentSecurity, PersistentSession, TtlExtensionPolicy};
 use actix_session::storage::CookieSessionStore;
-use actix_web::cookie::{Key, SameSite};
+use actix_web::cookie::SameSite;
+use actix_web::cookie::time::Duration as CookieDuration;
 use actix_web::middleware::{Logger, NormalizePath};
-use actix_web::{
-    App, HttpResponse, HttpServer, Scope, cookie::time::Duration as CookieDuration, web,
-};
+use actix_web::{App, HttpResponse, HttpServer, Scope, web};
+use clap::{Parser, Subcommand};
 use mongodb::bson::doc;
-use mongodb::options::{ClientOptions, IndexOptions};
+use mongodb::options::IndexOptions;
 use mongodb::{Client, IndexModel};
 use std::fs;
+use std::io;
+use std::path::PathBuf;
 use tera::Tera;
 use walkdir::WalkDir;
 
 mod app;
+mod bootstrap;
+mod config;
 mod db;
-mod globals;
+mod setup;
 mod sync;
 mod user;
 
+#[derive(Debug, Parser)]
+#[command(name = "mangayomi-server")]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    Serve {
+        #[arg(long)]
+        config: Option<PathBuf>,
+    },
+    Setup {
+        #[arg(long)]
+        config: Option<PathBuf>,
+    },
+}
+
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    dotenvy::dotenv().ok();
-    unsafe {
-        std::env::set_var("RUST_LOG", "debug");
+async fn main() -> io::Result<()> {
+    let command = Cli::parse()
+        .command
+        .unwrap_or(Command::Serve { config: None });
+    match command {
+        Command::Serve { config } => serve(config).await,
+        Command::Setup { config } => setup::run(&config::default_path(config))
+            .await
+            .map_err(|_| io::Error::other("setup failed")),
     }
+}
+
+async fn serve(path: Option<PathBuf>) -> io::Result<()> {
+    let path = config::default_path(path);
+    let raw = config::load_raw(&path).map_err(|_| io::Error::other("invalid configuration"))?;
+    let config =
+        config::from_raw(raw, true).map_err(|_| io::Error::other("invalid configuration"))?;
+    let client = db::create_client(&config.database_url)
+        .await
+        .map_err(|_| io::Error::other("could not connect to MongoDB"))?;
+    db::ping(&client)
+        .await
+        .map_err(|_| io::Error::other("could not connect to MongoDB"))?;
+    init_db_indexes(&client, &config.database_db)
+        .await
+        .map_err(|_| io::Error::other("could not initialize MongoDB"))?;
+    bootstrap::validate_complete_state(&client, &config.database_db)
+        .await
+        .map_err(|_| io::Error::other("bootstrap is incomplete; run setup"))?;
+
+    unsafe { std::env::set_var("RUST_LOG", "debug") };
     env_logger::init();
-
-    let db_url = globals::DATABASE_URL.as_str();
-    let host = globals::HOST.as_str();
-    let port = globals::PORT.as_str();
-    let session_ttl = &globals::SESSION_TTL;
-    // let redis_url = globals::REDIS_URL.as_str();
-    let key = &globals::SECRET_KEY;
-    let secret_key = if key.len() < 64 {
-        log::info!("Generated a random key because SECRET_KEY is not set in .env");
-        Key::generate()
-    } else {
-        Key::from(key.as_bytes())
-    };
-
-    log::info!("Connecting to {}:{}...", db_url, host);
-
-    db::CONN
-        .get_or_init(|| async {
-            let mut client_options = ClientOptions::parse(db_url).await.unwrap();
-            client_options.max_connecting = Some(20);
-            client_options.min_pool_size = Some(1);
-            let result = Client::with_options(client_options).unwrap();
-            log::info!("Connected to MongoDB.");
-            result
-        })
-        .await;
-    log::info!("Initializing Tera...");
-    let mut tera = Tera::default();
-    match tera.add_raw_templates(get_templates()) {
-        Ok(t) => t,
-        Err(e) => {
-            println!("Parsing error(s): {}", e);
-            ::std::process::exit(1);
-        }
-    };
-    tera.autoescape_on(vec![".html"]);
-    log::info!("Initialized Tera.");
-
-    let conn = db::CONN.get().unwrap();
+    let tera = initialize_tera()?;
     let live_sync_hub = web::Data::new(sync::live::LiveSyncHub::default());
-
-    init_db_indexes(conn).await;
-
-    /*
-    if *globals::USE_REDIS {
-                let redis_store = RedisSessionStore::new(redis_url)
-                    .await
-                    .unwrap();
-                SessionMiddleware::new(
-                    redis_store.clone(),
-                    secret_key.clone(),
-                )
-            } else {
-                SessionMiddleware::new(
-                    CookieSessionStore::default(),
-                    secret_key.clone(),
-                )
-            }
-     */
+    let database = config.database_db.clone();
+    let host = config.host.clone();
+    let port = config.port;
+    let session_ttl = config.session_ttl_days;
+    let secret_key = config.cookie_key();
+    let config_data = web::Data::new(config);
+    let client_data = web::Data::new(client);
 
     HttpServer::new(move || {
         App::new()
@@ -99,7 +98,7 @@ async fn main() -> std::io::Result<()> {
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .session_lifecycle(
                         PersistentSession::default()
-                            .session_ttl(CookieDuration::days(**session_ttl))
+                            .session_ttl(CookieDuration::days(session_ttl))
                             .session_ttl_extension_policy(TtlExtensionPolicy::OnEveryRequest),
                     )
                     .cookie_secure(true)
@@ -108,8 +107,10 @@ async fn main() -> std::io::Result<()> {
                     .cookie_http_only(true)
                     .build(),
             )
-            .app_data(web::Data::new(conn.clone()))
+            .app_data(client_data.clone())
+            .app_data(config_data.clone())
             .app_data(web::Data::new(tera.clone()))
+            .app_data(web::Data::new(database.clone()))
             .app_data(live_sync_hub.clone())
             .service(actix_files::Files::new("/assets", "./resources/assets"))
             .service(actix_files::Files::new(
@@ -119,6 +120,7 @@ async fn main() -> std::io::Result<()> {
             .service(user::controller::profile)
             .service(user::controller::delete)
             .service(user::controller::register)
+            .service(user::controller::admin_users)
             .service(user::controller::login)
             .service(user::controller::logout)
             .service(user::controller::home)
@@ -126,9 +128,17 @@ async fn main() -> std::io::Result<()> {
             .service(app::app_routes::basic_controller())
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
-    .bind(format!("{}:{}", host, port))?
+    .bind((host, port))?
     .run()
     .await
+}
+
+fn initialize_tera() -> io::Result<Tera> {
+    let mut tera = Tera::default();
+    tera.add_raw_templates(get_templates())
+        .map_err(|_| io::Error::other("template initialization failed"))?;
+    tera.autoescape_on(vec![".html"]);
+    Ok(tera)
 }
 
 fn sync_controller() -> Scope {
@@ -146,43 +156,38 @@ fn rate_limiter() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware> {
         .const_requests_per_minute(30)
         .burst_size(15)
         .finish()
-        .unwrap()
+        .expect("static rate limiter configuration")
 }
 
 fn get_templates() -> Vec<(String, String)> {
-    let mut templates: Vec<(String, String)> = Vec::new();
-
+    let mut templates = Vec::new();
     for file in WalkDir::new("./resources/templates")
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
     {
-        if file.metadata().unwrap().is_file() {
-            let template_name: String = file
-                .path()
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string();
-            match fs::read_to_string(file.path()) {
-                Ok(template_raw) => {
-                    log::info!("Adding template: {}", template_name);
-                    templates.push((template_name, template_raw));
-                }
-                Err(_) => {}
+        if file
+            .metadata()
+            .map(|metadata| metadata.is_file())
+            .unwrap_or(false)
+        {
+            let Some(template_name) = file.path().file_name().and_then(|name| name.to_str()) else {
+                continue;
             };
+            if let Ok(template_raw) = fs::read_to_string(file.path()) {
+                templates.push((template_name.to_owned(), template_raw));
+            }
         }
     }
     templates
 }
 
-async fn init_db_indexes(conn: &Client) {
-    // User-first ordering serves both point upserts and full per-user reads.
-    let idx = IndexModel::builder()
+async fn init_db_indexes(client: &Client, database: &str) -> mongodb::error::Result<()> {
+    bootstrap::create_user_email_index(client, database).await?;
+    let sync_idx = IndexModel::builder()
         .keys(doc! { "user": 1, "id": 1 })
         .options(
             IndexOptions::builder()
-                .name("sync_user_id".to_string())
+                .name("sync_user_id".to_owned())
                 .unique(true)
                 .build(),
         )
@@ -196,27 +201,20 @@ async fn init_db_indexes(conn: &Client) {
         "updates",
         "settings",
     ] {
-        let collection = conn
-            .database("mangayomi")
+        let collection = client
+            .database(database)
             .collection::<mongodb::bson::Document>(coll);
-        let result = collection
-            .create_index(idx.clone())
-            .await
-            .unwrap_or_else(|err| panic!("Failed to create {coll} index: {err}"));
-        log::info!("Created {} index: {}", coll, result.index_name);
-        if let Err(err) = collection.drop_index("id_-1_user_-1").await {
-            log::debug!("No obsolete {coll} index to remove: {err}");
-        }
+        collection.create_index(sync_idx.clone()).await?;
+        let _ = collection.drop_index("id_-1_user_-1").await;
     }
     let tombstone_idx = IndexModel::builder()
         .keys(doc! { "user": -1, "coll": -1, "id": -1 })
         .options(IndexOptions::builder().unique(true).build())
         .build();
-    let result = conn
-        .database("mangayomi")
+    client
+        .database(database)
         .collection::<mongodb::bson::Document>(sync::common::TOMBSTONES)
         .create_index(tombstone_idx)
-        .await
-        .unwrap_or_else(|err| panic!("Failed to create tombstones index: {err}"));
-    log::info!("Created tombstones index: {}", result.index_name);
+        .await?;
+    Ok(())
 }

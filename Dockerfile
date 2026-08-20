@@ -13,4 +13,5 @@ FROM scratch AS runtime
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/mangayomi-server /app/server
 COPY ./resources ./resources
 COPY ./frontend/dist/browser ./frontend/dist/browser
-CMD ["/app/server"]
+ENTRYPOINT ["/app/server"]
+CMD ["serve"]

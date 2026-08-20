@@ -8,11 +8,13 @@ pub async fn sync_update_list(
     user_id: ObjectId,
     update_list: &web::Json<UpdateList>,
     db: web::Data<Client>,
+    database: &str,
 ) -> SyncResult<UpdateList> {
     let reset_all = update_list.reset_all.unwrap_or(false);
 
     let (updates, deleted_updates) = sync_collection(
         &db,
+        database,
         "updates",
         user_id,
         &update_list.updates,

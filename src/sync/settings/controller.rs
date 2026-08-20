@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::sync::live::{Domain, LiveSyncHub, origin_client_id};
 use crate::sync::settings::model::SettingsObj;
 use crate::sync::settings::service::sync_settings;
@@ -9,16 +10,23 @@ use mongodb::bson::oid::ObjectId;
 #[post("/settings")]
 async fn sync_settings_obj(
     client: web::Data<Client>,
+    config: web::Data<Config>,
     hub: web::Data<LiveSyncHub>,
     request: HttpRequest,
     user: Identity,
     settings: web::Json<SettingsObj>,
 ) -> impl Responder {
-    let authenticated_user_id = user.id().unwrap();
-    let user_id = ObjectId::parse_str(&authenticated_user_id).unwrap();
+    let authenticated_user_id = match user.id() {
+        Ok(id) => id,
+        Err(_) => return HttpResponse::Unauthorized().finish(),
+    };
+    let user_id = match ObjectId::parse_str(&authenticated_user_id) {
+        Ok(id) => id,
+        Err(_) => return HttpResponse::Unauthorized().finish(),
+    };
     let contains_mutations = settings.settings.is_some();
 
-    match sync_settings(user_id, &settings, client).await {
+    match sync_settings(user_id, &settings, client, &config.database_db).await {
         Ok(data) => {
             if contains_mutations {
                 hub.broadcast(

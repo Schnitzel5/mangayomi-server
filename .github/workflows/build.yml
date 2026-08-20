@@ -20,12 +20,24 @@ jobs:
       - name: Build
         run: cargo build --all --release && strip target/release/mangayomi-server && mv target/release/mangayomi-server target/release/mangayomi-server_amd64
 
+      - name: Package Linux release
+        run: |
+          set -eu
+          bundle="mangayomi-server-linux-amd64"
+          root="dist/${bundle}"
+          mkdir -p "${root}/frontend/dist"
+          cp target/release/mangayomi-server_amd64 "${root}/mangayomi-server"
+          cp -R resources "${root}/resources"
+          cp -R frontend/dist/browser "${root}/frontend/dist/browser"
+          cp .env.dist "${root}/.env.dist"
+          tar -czf "dist/${bundle}.tar.gz" -C dist "${bundle}"
+
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            target/release/mangayomi-server_amd64
+            dist/mangayomi-server-linux-amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,11 +58,23 @@ jobs:
       - name: Build
         run: cargo build --all --release
 
+      - name: Package Windows release
+        shell: pwsh
+        run: |
+          $bundle = "mangayomi-server-windows-amd64"
+          $root = Join-Path "dist" $bundle
+          New-Item -ItemType Directory -Force -Path (Join-Path $root "frontend/dist") | Out-Null
+          Copy-Item "target/release/mangayomi-server.exe" (Join-Path $root "mangayomi-server.exe")
+          Copy-Item "resources" (Join-Path $root "resources") -Recurse
+          Copy-Item "frontend/dist/browser" (Join-Path $root "frontend/dist/browser") -Recurse
+          Copy-Item ".env.dist" (Join-Path $root ".env.dist")
+          Compress-Archive -Path $root -DestinationPath (Join-Path "dist" "$bundle.zip")
+
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/release/mangayomi-server.exe
+          files: dist/mangayomi-server-windows-amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -70,13 +94,25 @@ jobs:
           override: true
 
       - name: Build for mac
-        run: cargo build --all --release && strip target/release/mangayomi-server && mv target/release/mangayomi-server target/release/mangayomi-server_darwin
+        run: cargo build --all --release --target x86_64-apple-darwin && strip target/x86_64-apple-darwin/release/mangayomi-server
+
+      - name: Package macOS release
+        run: |
+          set -eu
+          bundle="mangayomi-server-macos-amd64"
+          root="dist/${bundle}"
+          mkdir -p "${root}/frontend/dist"
+          cp target/x86_64-apple-darwin/release/mangayomi-server "${root}/mangayomi-server"
+          cp -R resources "${root}/resources"
+          cp -R frontend/dist/browser "${root}/frontend/dist/browser"
+          cp .env.dist "${root}/.env.dist"
+          tar -czf "dist/${bundle}.tar.gz" -C dist "${bundle}"
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            target/release/mangayomi-server_darwin
+            dist/mangayomi-server-macos-amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,7 @@ version = "0.1.2"
 edition = "2024"
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
 actix-web = "4"
 actix-ws = "0.3"
 dotenvy = "0.15"
@@ -33,3 +34,5 @@ futures = "0.3.31"
 actix-governor = "0.8.0"
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
+rpassword = "7"
+tempfile = "3"

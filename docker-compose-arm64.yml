@@ -6,14 +6,17 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=mongodb://${DATABASE_USER}:${DATABASE_PASSWORD}@database/
-      - HOST=${HOST}
-      - PORT=${PORT}
+      - DATABASE_DB=${DATABASE_DB:-mangayomi}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-8080}
+      - SESSION_TTL_DAYS=${SESSION_TTL_DAYS:-30}
       - SECRET_KEY=${SECRET_KEY}
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-false}
     depends_on:
       database:
         condition: service_healthy
     ports:
-      - ${PORT}:${PORT}
+      - ${PORT:-8080}:${PORT:-8080}
   database:
     image: mongo
     restart: unless-stopped
@@ -21,7 +24,7 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${DATABASE_PASSWORD}
       - MONGO_INITDB_ROOT_USERNAME=${DATABASE_USER}
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet}
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       start_period: 5s
       interval: 10s
       timeout: 3s

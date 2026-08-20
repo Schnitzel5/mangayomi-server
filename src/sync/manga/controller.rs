@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::sync::live::{Domain, LiveSyncHub, has_mutations, origin_client_id};
 use crate::sync::manga::model::MangaList;
 use crate::sync::manga::service::sync_manga_list;
@@ -9,13 +10,20 @@ use mongodb::bson::oid::ObjectId;
 #[post("/manga")]
 async fn sync_manga(
     client: web::Data<Client>,
+    config: web::Data<Config>,
     hub: web::Data<LiveSyncHub>,
     request: HttpRequest,
     user: Identity,
     manga_list: web::Json<MangaList>,
 ) -> impl Responder {
-    let authenticated_user_id = user.id().unwrap();
-    let user_id = ObjectId::parse_str(&authenticated_user_id).unwrap();
+    let authenticated_user_id = match user.id() {
+        Ok(id) => id,
+        Err(_) => return HttpResponse::Unauthorized().finish(),
+    };
+    let user_id = match ObjectId::parse_str(&authenticated_user_id) {
+        Ok(id) => id,
+        Err(_) => return HttpResponse::Unauthorized().finish(),
+    };
     let contains_mutations = has_mutations(
         manga_list.reset_all,
         [
@@ -29,7 +37,7 @@ async fn sync_manga(
             manga_list.deleted_tracks.len(),
         ],
     );
-    let result = match sync_manga_list(user_id, &manga_list, client).await {
+    let result = match sync_manga_list(user_id, &manga_list, client, &config.database_db).await {
         Ok(result) => result,
         Err(err) => {
             log::error!("Manga sync failed: {err}");

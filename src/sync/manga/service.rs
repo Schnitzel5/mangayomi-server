@@ -8,12 +8,14 @@ pub async fn sync_manga_list(
     user_id: ObjectId,
     manga_list: &web::Json<MangaList>,
     db: web::Data<Client>,
+    database: &str,
 ) -> SyncResult<MangaList> {
     let reset_all = manga_list.reset_all.unwrap_or(false);
 
     let (category_result, manga_result, chapter_result, track_result) = tokio::try_join!(
         sync_collection(
             &db,
+            database,
             "categories",
             user_id,
             &manga_list.categories,
@@ -22,6 +24,7 @@ pub async fn sync_manga_list(
         ),
         sync_collection(
             &db,
+            database,
             "manga",
             user_id,
             &manga_list.manga,
@@ -30,6 +33,7 @@ pub async fn sync_manga_list(
         ),
         sync_collection(
             &db,
+            database,
             "chapters",
             user_id,
             &manga_list.chapters,
@@ -38,6 +42,7 @@ pub async fn sync_manga_list(
         ),
         sync_collection(
             &db,
+            database,
             "tracks",
             user_id,
             &manga_list.tracks,

@@ -42,7 +42,6 @@ fn plan_upsert(updated_at: i64, deleted_at: Option<i64>, stored_at: Option<i64>)
     }
 }
 
-const DB: &str = "mangayomi";
 pub const TOMBSTONES: &str = "tombstones";
 
 /// Records a deletion so stale copies on other devices can't resurrect it.
@@ -68,6 +67,7 @@ fn now_ms() -> i64 {
 /// Returns (all docs for the user, all tombstoned ids for the user).
 pub async fn sync_collection<T>(
     db: &web::Data<Client>,
+    database: &str,
     coll_name: &str,
     user_id: ObjectId,
     items: &[T],
@@ -77,13 +77,13 @@ pub async fn sync_collection<T>(
 where
     T: Clone + Model + Serialize + DeserializeOwned + Unpin + Send + Sync,
 {
-    let collection: Collection<T> = db.database(DB).collection(coll_name);
-    let tombstones: Collection<Tombstone> = db.database(DB).collection(TOMBSTONES);
+    let collection: Collection<T> = db.database(database).collection(coll_name);
+    let tombstones: Collection<Tombstone> = db.database(database).collection(TOMBSTONES);
 
     if reset_all {
         // Client state replaces server state. Upsert first, prune second, so a
         // crash mid-request never leaves the user with an empty library.
-        upsert(db, coll_name, user_id, items, false).await?;
+        upsert(db, database, coll_name, user_id, items, false).await?;
         let ids: Vec<i32> = items.iter().map(|i| i.get_id()).collect();
         collection
             .delete_many(doc! { "user": user_id, "id": { "$nin": ids } })
@@ -94,12 +94,12 @@ where
         return Ok((items.to_vec(), Vec::new()));
     }
 
-    upsert(db, coll_name, user_id, items, true).await?;
+    upsert(db, database, coll_name, user_id, items, true).await?;
     if !deleted_ids.is_empty() {
         collection
             .delete_many(doc! { "user": user_id, "id": { "$in": deleted_ids.to_vec() } })
             .await?;
-        bury(db, coll_name, user_id, deleted_ids).await?;
+        bury(db, database, coll_name, user_id, deleted_ids).await?;
     }
 
     let load_docs = async {
@@ -131,6 +131,7 @@ where
 /// tombstone. Without `guard` (resetAll), incoming docs win unconditionally.
 pub async fn upsert<T>(
     db: &web::Data<Client>,
+    database: &str,
     coll_name: &str,
     user_id: ObjectId,
     items: &[T],
@@ -143,8 +144,8 @@ where
         return Ok(());
     }
     let ids: Vec<i32> = items.iter().map(|item| item.get_id()).collect();
-    let tombstones: Collection<Tombstone> = db.database(DB).collection(TOMBSTONES);
-    let versions: Collection<StoredVersion> = db.database(DB).collection(coll_name);
+    let tombstones: Collection<Tombstone> = db.database(database).collection(TOMBSTONES);
+    let versions: Collection<StoredVersion> = db.database(database).collection(coll_name);
     let load_dead = async {
         // Settings cannot be deleted, so it has no tombstones to guard.
         if !guard || coll_name == "settings" {
@@ -180,7 +181,7 @@ where
     let (dead, current): (HashMap<i32, i64>, HashMap<i32, i64>) =
         tokio::try_join!(load_dead, load_current)?;
 
-    let namespace = Namespace::new(DB, coll_name);
+    let namespace = Namespace::new(database, coll_name);
     let mut ops = vec![];
     let mut revived = vec![];
     for item in items {
@@ -236,12 +237,13 @@ where
 
 async fn bury(
     db: &web::Data<Client>,
+    database: &str,
     coll_name: &str,
     user_id: ObjectId,
     ids: &[i32],
 ) -> SyncResult<()> {
     let now = now_ms();
-    let namespace = Namespace::new(DB, TOMBSTONES);
+    let namespace = Namespace::new(database, TOMBSTONES);
     let ops: Vec<WriteModel> = ids
         .iter()
         .map(|id| {
