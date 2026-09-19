@@ -1,3 +1,7 @@
+> [!NOTE] 
+> # DEPRECATED
+> This is no longer supported, please consider using the new [sync server](https://github.com/not-akari/mangayomi-sync-server) instead.
+
 # mangayomi-server
 
 A self-hosted server for Mangayomi.
